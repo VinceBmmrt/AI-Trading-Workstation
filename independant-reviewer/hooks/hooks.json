@@ -1,0 +1,15 @@
+{
+"hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Run the change-reviewer agent: review all changes since the last git commit and write the findings to planning/REVIEW.md",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}
