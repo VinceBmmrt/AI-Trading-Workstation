@@ -1,62 +1,74 @@
-# AI Trading Workstation — AI Trading Workstation
+# AI Trading Workstation — Finance Ally
 
-A visually stunning AI-powered trading workstation that streams live market data, simulates portfolio trading, and integrates an LLM chat assistant that can analyze positions and execute trades via natural language.
+A visually rich, AI-powered trading terminal. Stream live market data, trade a simulated portfolio, and chat with an AI assistant that can analyze positions and execute trades on your behalf.
 
-Built entirely by coding agents as a capstone project for an agentic AI coding course.
+## What It Does
 
-## Features
-
-- **Live price streaming** via SSE with green/red flash animations
-- **Simulated portfolio** — $10k virtual cash, market orders, instant fills
-- **Portfolio visualizations** — heatmap (treemap), P&L chart, positions table
-- **AI chat assistant** — analyzes holdings, suggests and auto-executes trades
-- **Watchlist management** — track tickers manually or via AI
-- **Dark terminal aesthetic** — Bloomberg-inspired, data-dense layout
+- **Live price streaming** — prices flash green/red on change via SSE, sparkline charts fill progressively
+- **Simulated trading** — $10,000 in virtual cash, instant market-order fills, no fees
+- **Portfolio dashboard** — treemap heatmap by P&L weight, positions table, P&L chart over time
+- **AI chat assistant** — ask about your portfolio, request trades, manage your watchlist in natural language
+- **Watchlist management** — add/remove tickers manually or through the AI
 
 ## Architecture
 
-Single Docker container serving everything on port 8000:
+Single Docker container on port 8000. FastAPI serves both the REST/SSE API and the static Next.js frontend.
 
-- **Frontend**: Next.js (static export) with TypeScript and Tailwind CSS
-- **Backend**: FastAPI (Python/uv) with SSE streaming
-- **Database**: SQLite initialized on startup via FastAPI lifespan event
-- **AI**: LiteLLM → OpenRouter (Cerebras inference) with structured outputs
-- **Market data**: Built-in GBM simulator (default) or Massive API (optional)
+```
+FastAPI (Python/uv)
+├── /api/*          REST endpoints
+├── /api/stream/*   SSE price stream
+└── /*              Static Next.js export
+
+SQLite (volume-mounted)
+Market data: GBM simulator (default) or Massive/Polygon.io API
+LLM: LiteLLM → OpenRouter (Cerebras inference)
+```
 
 ## Quick Start
 
 ```bash
-# Clone and configure
+# Copy and fill in your API key
 cp .env.example .env
-# Add your OPENROUTER_API_KEY to .env
 
-# Run with Docker
-docker build -t ai-trading-workstation .
-docker run -v ai-trading-workstation-data:/app/db -p 8000:8000 --env-file .env ai-trading-workstation
-
-# Open http://localhost:8000
+# Build and run (Docker required)
+docker run -v ai-trading-workstation-data:/app/db \
+           -p 8000:8000 \
+           --env-file .env \
+           ai-trading-workstation
 ```
+
+Then open [http://localhost:8000](http://localhost:8000).
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENROUTER_API_KEY` | Yes | OpenRouter API key for AI chat |
-| `MASSIVE_API_KEY` | No | Massive (Polygon.io) key for real market data; omit to use simulator |
+| `OPENROUTER_API_KEY` | Yes | Powers the AI chat assistant |
+| `MASSIVE_API_KEY` | No | Real market data (Polygon.io); simulator used if absent |
 | `LLM_MOCK` | No | Set `true` for deterministic mock LLM responses (testing) |
 
-## Project Structure
+## Development
 
+```bash
+# Backend
+cd backend
+uv sync --dev
+uv run pytest -v
+
+# Live market data demo (terminal dashboard)
+uv run market_data_demo.py
 ```
-AI Trading Workstation/
-├── frontend/    # Next.js static export
-├── backend/     # FastAPI uv project
-├── planning/    # Project documentation and agent contracts
-├── test/        # Playwright E2E tests
-├── db/          # SQLite volume mount (runtime)
-└── scripts/     # Start/stop helpers
-```
 
-## License
+See `backend/README.md` for full backend documentation.
 
-See [LICENSE](LICENSE).
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python, FastAPI, uv |
+| Frontend | Next.js, TypeScript, Tailwind CSS |
+| Database | SQLite |
+| Real-time | Server-Sent Events (SSE) |
+| AI | LiteLLM → OpenRouter (Cerebras) |
+| Deployment | Docker (single container) |
