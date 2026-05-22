@@ -1,4 +1,4 @@
-# AI Trading Workstation — AI Trading Workstation
+# AI Trading Workstation
 
 ## Project Specification
 
@@ -88,7 +88,7 @@ The user runs a single Docker command (or a provided start script). A browser op
 AI Trading Workstation/
 ├── frontend/                 # Next.js TypeScript project (static export)
 ├── backend/                  # FastAPI uv project (Python)
-│   └── db/                   # Schema definitions, seed data, migration logic
+│   └── schema/               # Schema definitions, seed data, migration logic
 ├── planning/                 # Project-wide documentation for agents
 │   ├── PLAN.md               # This document
 │   └── ...                   # Additional agent reference docs
@@ -110,7 +110,7 @@ AI Trading Workstation/
 
 - **`frontend/`** is a self-contained Next.js project. It knows nothing about Python. It talks to the backend via `/api/*` endpoints and `/api/stream/*` SSE endpoints. Internal structure is up to the Frontend Engineer agent.
 - **`backend/`** is a self-contained uv project with its own `pyproject.toml`. It owns all server logic including database initialization, schema, seed data, API routes, SSE streaming, market data, and LLM integration. Internal structure is up to the Backend/Market Data agents.
-- **`backend/db/`** contains schema SQL definitions and seed logic. The backend lazily initializes the database on first request — creating tables and seeding default data if the SQLite file doesn't exist or is empty.
+- **`backend/schema/`** contains schema SQL definitions and seed logic. The backend initializes the database on startup via the FastAPI lifespan event — creating tables and seeding default data if the SQLite file doesn't exist or is empty.
 - **`db/`** at the top level is the runtime volume mount point. The SQLite file (`db/AI Trading Workstation.db`) is created here by the backend and persists across container restarts via Docker volume.
 - **`planning/`** contains project-wide documentation, including this plan. All agents reference files here as the shared contract.
 - **`test/`** contains Playwright E2E tests and supporting infrastructure (e.g., `docker-compose.test.yml`). Unit tests live within `frontend/` and `backend/` respectively, following each framework's conventions.
@@ -160,8 +160,7 @@ Both the simulator and the Massive client implement the same abstract interface.
 
 - REST API polling (not WebSocket) — simpler, works on all tiers
 - Polls for the union of all watched tickers on a configurable interval
-- Free tier (5 calls/min): poll every 15 seconds
-- Paid tiers: poll every 2-15 seconds depending on tier
+- Free tier polls every 15 seconds; paid tiers can poll faster
 - Parses REST response into the same format as the simulator
 
 ### Shared Price Cache
@@ -175,7 +174,8 @@ Both the simulator and the Massive client implement the same abstract interface.
 
 - Endpoint: `GET /api/stream/prices`
 - Long-lived SSE connection; client uses native `EventSource` API
-- Server pushes price updates for all tickers known to the system at a regular cadence (~500ms) — in the single-user model this is equivalent to the user's watchlist
+- Server pushes price updates for all tickers at a fixed 500ms cadence regardless of the data source
+- When using the Massive API (15-second poll interval), the SSE stream continues emitting cached prices at 500ms; a subtle client-side micro-variation (±0.05%) is applied between real updates to prevent a visually "frozen" UI
 - Each SSE event contains ticker, price, previous price, timestamp, and change direction
 - Client handles reconnection automatically (EventSource has built-in retry)
 
@@ -183,9 +183,9 @@ Both the simulator and the Massive client implement the same abstract interface.
 
 ## 7. Database
 
-### SQLite with Lazy Initialization
+### SQLite with Startup Initialization
 
-The backend checks for the SQLite database on startup (or first request). If the file doesn't exist or tables are missing, it creates the schema and seeds default data. This means:
+The backend initializes the SQLite database strictly on startup via the FastAPI lifespan event. All tables are created and seeded before the server starts accepting traffic, eliminating any concurrent-request race conditions. This means:
 
 - No separate migration step
 - No manual database setup
@@ -201,14 +201,14 @@ All tables include a `user_id` column defaulting to `"default"`. This is hardcod
 - `created_at` TEXT (ISO timestamp)
 
 **watchlist** — Tickers the user is watching
-- `id` TEXT PRIMARY KEY (UUID)
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
 - `user_id` TEXT (default: `"default"`)
 - `ticker` TEXT
 - `added_at` TEXT (ISO timestamp)
 - UNIQUE constraint on `(user_id, ticker)`
 
 **positions** — Current holdings (one row per ticker per user)
-- `id` TEXT PRIMARY KEY (UUID)
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
 - `user_id` TEXT (default: `"default"`)
 - `ticker` TEXT
 - `quantity` REAL (fractional shares supported)
@@ -226,9 +226,9 @@ All tables include a `user_id` column defaulting to `"default"`. This is hardcod
 - `executed_at` TEXT (ISO timestamp)
 
 **portfolio_snapshots** — Portfolio value over time (for P&L chart). Recorded every 30 seconds by a background task, and immediately after each trade execution.
-- `id` TEXT PRIMARY KEY (UUID)
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
 - `user_id` TEXT (default: `"default"`)
-- `total_value` REAL
+- `total_value` REAL — `cash_balance + Σ(quantity_i × current_price_i)`; current prices fetched from the shared price cache at snapshot time
 - `recorded_at` TEXT (ISO timestamp)
 
 **chat_messages** — Conversation history with LLM
@@ -257,14 +257,14 @@ All tables include a `user_id` column defaulting to `"default"`. This is hardcod
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/portfolio` | Current positions, cash balance, total value, unrealized P&L |
-| POST | `/api/portfolio/trade` | Execute a trade: `{ticker, quantity, side}` |
+| POST | `/api/portfolio/trade` | Execute a trade: `{ticker, quantity, side}` → `{success, trade, portfolio}` |
 | GET | `/api/portfolio/history` | Portfolio value snapshots over time (for P&L chart) |
 
 ### Watchlist
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/watchlist` | Current watchlist tickers with latest prices |
-| POST | `/api/watchlist` | Add a ticker: `{ticker}` |
+| POST | `/api/watchlist` | Add a ticker: `{ticker}` → `{success, ticker, current_price}`. With Massive API, returns 400 if ticker is unknown; in simulator mode, any alphanumeric string ≤5 chars is accepted. |
 | DELETE | `/api/watchlist/{ticker}` | Remove a ticker |
 
 ### Chat
@@ -281,7 +281,7 @@ All tables include a `user_id` column defaulting to `"default"`. This is hardcod
 
 ## 9. LLM Integration
 
-When writing code to make calls to LLMs, use cerebras-inference skill to use LiteLLM via OpenRouter to the `openrouter/openai/gpt-oss-120b` model with Cerebras as the inference provider. Structured Outputs should be used to interpret the results.
+When writing code to make calls to LLMs, use the cerebras-inference skill — it manages the model ID and provider routing. Structured Outputs should be used to interpret the results.
 
 There is an OPENROUTER_API_KEY in the .env file in the project root.
 
@@ -290,7 +290,7 @@ There is an OPENROUTER_API_KEY in the .env file in the project root.
 When the user sends a chat message, the backend:
 
 1. Loads the user's current portfolio context (cash, positions with P&L, watchlist with live prices, total portfolio value)
-2. Loads recent conversation history from the `chat_messages` table
+2. Loads a sliding window of the last 10 messages (5 user turns + 5 assistant turns) from the `chat_messages` table
 3. Constructs a prompt with a system message, portfolio context, conversation history, and the user's new message
 4. Calls the LLM via LiteLLM → OpenRouter, requesting structured output, using the cerebras-inference skill
 5. Parses the complete structured JSON response
@@ -327,6 +327,8 @@ Trades specified by the LLM execute automatically — no confirmation dialog. Th
 
 If a trade fails validation (e.g., insufficient cash), the error is included in the chat response so the LLM can inform the user.
 
+If the LLM returns malformed JSON or omits required fields, the backend catches the parsing error and returns a safe fallback: the raw text mapped to `message`, with `trades` and `watchlist_changes` defaulting to `[]`.
+
 ### System Prompt Guidance
 
 The LLM should be prompted as "AI Trading Workstation, an AI trading assistant" with instructions to:
@@ -352,7 +354,7 @@ When `LLM_MOCK=true`, the backend returns deterministic mock responses instead o
 
 The frontend is a single-page application with a dense, terminal-inspired layout. The specific component architecture and layout system is up to the Frontend Engineer, but the UI should include these elements:
 
-- **Watchlist panel** — grid/table of watched tickers with: ticker symbol, current price (flashing green/red on change), daily change %, and a sparkline mini-chart (accumulated from SSE since page load)
+- **Watchlist panel** — grid/table of watched tickers with: ticker symbol, current price (flashing green/red on change), session change % (relative to server-start seed price for simulator; real daily change % for Massive API), and a sparkline mini-chart (accumulated from SSE since page load)
 - **Main chart area** — larger chart for the currently selected ticker, with at minimum price over time. Clicking a ticker in the watchlist selects it here.
 - **Portfolio heatmap** — treemap visualization where each rectangle is a position, sized by portfolio weight, colored by P&L (green = profit, red = loss)
 - **P&L chart** — line chart showing total portfolio value over time, using data from `portfolio_snapshots`
@@ -396,7 +398,7 @@ FastAPI serves the static frontend files and all API routes on port 8000.
 The SQLite database persists via a named Docker volume:
 
 ```bash
-docker run -v AI Trading Workstation-data:/app/db -p 8000:8000 --env-file .env AI Trading Workstation
+docker run -v ai-trading-workstation-data:/app/db -p 8000:8000 --env-file .env ai-trading-workstation
 ```
 
 The `db/` directory in the project root maps to `/app/db` in the container. The backend writes `AI Trading Workstation.db` to this path.
@@ -433,12 +435,14 @@ The container is designed to deploy to AWS App Runner, Render, or any container 
 - LLM: structured output parsing handles all valid schemas, graceful handling of malformed responses, trade validation within chat flow
 - API routes: correct status codes, response shapes, error handling
 
-**Frontend (React Testing Library or similar)**:
+**Frontend (React Testing Library or similar)** — *optional / nice-to-have*:
 - Component rendering with mock data
 - Price flash animation triggers correctly on price changes
 - Watchlist CRUD operations
 - Portfolio display calculations
 - Chat message rendering and loading state
+
+Core feature correctness is validated by Playwright E2E tests rather than per-component unit tests.
 
 ### E2E Tests (in `test/`)
 
@@ -454,3 +458,27 @@ The container is designed to deploy to AWS App Runner, Render, or any container 
 - Portfolio visualization: heatmap renders with correct colors, P&L chart has data points
 - AI chat (mocked): send a message, receive a response, trade execution appears inline
 - SSE resilience: disconnect and verify reconnection
+
+---
+
+## 13. Architecture Decisions Log
+
+*2026-05-22 — decisions made during doc review*
+
+| Area | Decision |
+|------|----------|
+| Title | Corrected to "AI Trading Workstation" (duplicate name was a typo) |
+| SSE + Massive API | SSE always pushes at 500ms; cached prices are re-emitted between Massive API polls with ±0.05% client-side micro-variation to keep the UI dynamic |
+| DB initialization | Strictly on startup via FastAPI lifespan event — not on first request |
+| `total_value` formula | `cash_balance + Σ(quantity_i × current_price_i)`, prices from the shared price cache |
+| Trade endpoint response | `{success, trade, portfolio}` |
+| Watchlist POST response | `{success, ticker, current_price}`; 400 on unknown ticker with Massive API; any alphanumeric ≤5 chars accepted in simulator mode |
+| Chat history window | Fixed sliding window: last 10 messages (5 user + 5 assistant turns) |
+| LLM failure fallback | Malformed JSON → `{message: <raw text>, trades: [], watchlist_changes: []}` |
+| Session change % | Renamed from "daily change %"; simulator uses server-start seed price as baseline; Massive API uses real daily close |
+| Docker volume name | Slugified: `ai-trading-workstation-data` |
+| Primary keys | UUID retained for `chat_messages` and `trades`; `positions`, `watchlist`, `portfolio_snapshots` use `INTEGER PRIMARY KEY AUTOINCREMENT` |
+| Directory naming | `backend/db/` renamed to `backend/schema/` to eliminate confusion with root `db/` volume mount |
+| Frontend unit tests | Scoped as optional / nice-to-have; E2E tests are the primary coverage mechanism |
+| LLM model ID | Removed from plan text; cerebras-inference skill is the single source of truth |
+| Massive API detail | Trimmed to free-tier (15s) only; paid-tier specifics removed from spec |
