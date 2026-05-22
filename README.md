@@ -19,7 +19,7 @@ Single Docker container serving everything on port 8000:
 
 - **Frontend**: Next.js (static export) with TypeScript and Tailwind CSS
 - **Backend**: FastAPI (Python/uv) with SSE streaming
-- **Database**: SQLite with lazy initialization
+- **Database**: SQLite initialized on startup via FastAPI lifespan event
 - **AI**: LiteLLM → OpenRouter (Cerebras inference) with structured outputs
 - **Market data**: Built-in GBM simulator (default) or Massive API (optional)
 
@@ -31,8 +31,8 @@ cp .env.example .env
 # Add your OPENROUTER_API_KEY to .env
 
 # Run with Docker
-docker build -t AI Trading Workstation .
-docker run -v AI Trading Workstation-data:/app/db -p 8000:8000 --env-file .env AI Trading Workstation
+docker build -t ai-trading-workstation .
+docker run -v ai-trading-workstation-data:/app/db -p 8000:8000 --env-file .env ai-trading-workstation
 
 # Open http://localhost:8000
 ```

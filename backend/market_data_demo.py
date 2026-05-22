@@ -262,7 +262,7 @@ async def run() -> None:
 
     except KeyboardInterrupt:
         pass
-    AI Trading Workstation:
+    finally:
         await source.stop()
 
     print_summary(cache)

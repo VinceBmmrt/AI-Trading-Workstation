@@ -52,16 +52,20 @@ async def _generate_events(
     price_cache: PriceCache,
     request: Request,
     interval: float = 0.5,
+    heartbeat_interval: float = 15.0,
 ) -> AsyncGenerator[str, None]:
     """Async generator that yields SSE-formatted price events.
 
     Sends all prices every `interval` seconds. Stops when the client
-    disconnects (detected via request.is_disconnected()).
+    disconnects (detected via request.is_disconnected()). Emits a keepalive
+    comment every `heartbeat_interval` seconds when there are no data changes,
+    preventing proxies from dropping idle connections.
     """
     # Tell the client to retry after 1 second if the connection drops
     yield "retry: 1000\n\n"
 
     last_version = -1
+    last_emit = asyncio.get_running_loop().time()
     client_ip = request.client.host if request.client else "unknown"
     logger.info("SSE client connected: %s", client_ip)
 
@@ -73,14 +77,20 @@ async def _generate_events(
                 break
 
             current_version = price_cache.version
+            now = asyncio.get_running_loop().time()
+
             if current_version != last_version:
                 last_version = current_version
+                last_emit = now
                 prices = price_cache.get_all()
 
                 if prices:
                     data = {ticker: update.to_dict() for ticker, update in prices.items()}
                     payload = json.dumps(data)
                     yield f"data: {payload}\n\n"
+            elif now - last_emit >= heartbeat_interval:
+                last_emit = now
+                yield ": keepalive\n\n"
 
             await asyncio.sleep(interval)
     except asyncio.CancelledError:
