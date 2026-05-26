@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -136,30 +137,13 @@ async def chat(body: ChatRequest, request: Request):
             logger.error("LLM call failed: %s", e)
             llm_response = LLMResponse(message="I'm having trouble right now. Please try again.")
 
-    # Execute trades
-    executed_trades, trade_errors = [], []
-    for t in llm_response.trades:
-        ticker = t.ticker.upper().strip()
-        price = price_cache.get_price(ticker)
-        if price is None:
-            trade_errors.append(f"No price for {ticker}")
-            continue
-        try:
-            record = execute_trade(USER_ID, ticker, t.side, t.quantity, price)
-            executed_trades.append(record)
-        except ValueError as e:
-            trade_errors.append(str(e))
-
-    if executed_trades:
-        take_snapshot(USER_ID, price_cache)
-
-    # Execute watchlist changes
+    # Execute watchlist changes FIRST so new tickers get prices before trades run
     executed_wl = []
+    new_tickers_added = False
     for wl in llm_response.watchlist_changes:
         ticker = wl.ticker.upper().strip()
         try:
             if wl.action == "add":
-                from datetime import datetime, timezone
                 with get_db() as conn:
                     conn.execute(
                         "INSERT OR IGNORE INTO watchlist (user_id, ticker, added_at) VALUES (?,?,?)",
@@ -167,6 +151,7 @@ async def chat(body: ChatRequest, request: Request):
                     )
                 await market_source.add_ticker(ticker)
                 executed_wl.append({"ticker": ticker, "action": "add"})
+                new_tickers_added = True
             elif wl.action == "remove":
                 with get_db() as conn:
                     conn.execute(
@@ -176,6 +161,27 @@ async def chat(body: ChatRequest, request: Request):
                 executed_wl.append({"ticker": ticker, "action": "remove"})
         except Exception as e:
             logger.warning("Watchlist change failed for %s: %s", ticker, e)
+
+    # Give the simulator a moment to generate prices for newly-added tickers
+    if new_tickers_added and llm_response.trades:
+        await asyncio.sleep(0.6)
+
+    # Execute trades
+    executed_trades, trade_errors = [], []
+    for t in llm_response.trades:
+        ticker = t.ticker.upper().strip()
+        price = price_cache.get_price(ticker)
+        if price is None:
+            trade_errors.append(f"No price available for {ticker} — add it to your watchlist first")
+            continue
+        try:
+            record = execute_trade(USER_ID, ticker, t.side, t.quantity, price)
+            executed_trades.append(record)
+        except ValueError as e:
+            trade_errors.append(str(e))
+
+    if executed_trades:
+        take_snapshot(USER_ID, price_cache)
 
     actions = {
         "trades": executed_trades,

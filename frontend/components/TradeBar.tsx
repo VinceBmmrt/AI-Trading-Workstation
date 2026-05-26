@@ -41,38 +41,42 @@ export default function TradeBar({ selectedTicker, onTradeComplete }: Props) {
 
   return (
     <div className="px-3 py-2.5 border-t border-border bg-surface">
-      <div className="flex gap-2 items-center">
-        <input
-          type="text"
-          placeholder={selectedTicker || "TICKER"}
-          value={ticker}
-          onChange={(e) => setTicker(e.target.value.toUpperCase())}
-          maxLength={5}
-          className="w-20 bg-bg border border-border rounded px-2 py-1.5 text-xs font-mono text-text placeholder-text-dim uppercase focus:outline-none focus:border-blue"
-        />
-        <input
-          type="number"
-          placeholder="QTY"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-          min="0"
-          step="1"
-          className="w-20 bg-bg border border-border rounded px-2 py-1.5 text-xs font-mono text-text placeholder-text-dim focus:outline-none focus:border-blue"
-        />
-        <button
-          onClick={() => doTrade("buy")}
-          disabled={loading}
-          className="px-3 py-1.5 bg-blue/20 border border-blue/50 rounded text-xs font-mono font-semibold text-blue hover:bg-blue/30 disabled:opacity-40 transition-colors"
-        >
-          BUY
-        </button>
-        <button
-          onClick={() => doTrade("sell")}
-          disabled={loading}
-          className="px-3 py-1.5 bg-down/20 border border-down/50 rounded text-xs font-mono font-semibold text-down hover:bg-down/30 disabled:opacity-40 transition-colors"
-        >
-          SELL
-        </button>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex gap-1.5">
+          <input
+            type="text"
+            placeholder={selectedTicker || "TICKER"}
+            value={ticker}
+            onChange={(e) => setTicker(e.target.value.toUpperCase())}
+            maxLength={5}
+            className="flex-1 min-w-0 bg-bg border border-border rounded px-2 py-1.5 text-xs font-mono text-text placeholder-text-dim uppercase focus:outline-none focus:border-blue"
+          />
+          <input
+            type="number"
+            placeholder="QTY"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            min="0"
+            step="1"
+            className="flex-1 min-w-0 bg-bg border border-border rounded px-2 py-1.5 text-xs font-mono text-text placeholder-text-dim focus:outline-none focus:border-blue"
+          />
+        </div>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => doTrade("buy")}
+            disabled={loading}
+            className="flex-1 py-1.5 bg-blue/20 border border-blue/50 rounded text-xs font-mono font-semibold text-blue hover:bg-blue/30 disabled:opacity-40 transition-colors"
+          >
+            BUY
+          </button>
+          <button
+            onClick={() => doTrade("sell")}
+            disabled={loading}
+            className="flex-1 py-1.5 bg-down/20 border border-down/50 rounded text-xs font-mono font-semibold text-down hover:bg-down/30 disabled:opacity-40 transition-colors"
+          >
+            SELL
+          </button>
+        </div>
       </div>
       {status && (
         <p className={`mt-1.5 text-[11px] font-mono ${status.ok ? "text-up" : "text-down"}`}>
