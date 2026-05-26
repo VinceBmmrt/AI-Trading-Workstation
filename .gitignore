@@ -200,6 +200,19 @@ cython_debug/
 # Playwright MCP recordings
 .playwright-mcp/
 
+# Test dependencies
+test/node_modules/
+
+# GSD (Get Shit Done) workflow tool files — local dev tooling, not project code
+.claude/get-shit-done/
+.claude/commands/gsd/
+.claude/agents/gsd-*.md
+.claude/hooks/
+.claude/package.json
+.claude/.gsd-profile
+.claude/gsd-*
+
+
 # Cursor
 #  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
 #  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
