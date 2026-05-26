@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: ai-trading-workstation-test
+    container_name: ai-trading-workstation-test
+    volumes:
+      - ai-trading-workstation-test-data:/app/db
+    ports:
+      - "8000:8000"
+    environment:
+      - LLM_MOCK=true
+      - OPENROUTER_API_KEY=mock-key
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ai-trading-workstation-test-data:
