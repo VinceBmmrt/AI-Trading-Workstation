@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    image: ai-trading-workstation
+    container_name: ai-trading-workstation
+    volumes:
+      - ai-trading-workstation-data:/app/db
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  ai-trading-workstation-data:
