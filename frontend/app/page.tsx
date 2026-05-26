@@ -68,7 +68,7 @@ export default function TradingPage() {
         </aside>
 
         {/* CENTER: Chart + Portfolio */}
-        <main className="flex-1 flex flex-col min-w-0 min-h-0">
+        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
           {/* Price chart: 60% */}
           <div className="flex-[3] min-h-0 border-b border-border overflow-hidden">
             <PriceChart ticker={selectedTicker} prices={market.prices} history={market.history} />
