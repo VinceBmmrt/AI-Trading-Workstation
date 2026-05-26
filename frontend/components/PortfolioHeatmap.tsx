@@ -9,8 +9,9 @@ interface Props {
 export default function PortfolioHeatmap({ portfolio }: Props) {
   if (!portfolio || portfolio.positions.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-text-dim text-xs font-mono">
-        NO POSITIONS
+      <div className="flex flex-col items-center justify-center gap-2 h-full text-text-dim">
+        <span className="text-2xl opacity-20">◈</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest">No positions to display</span>
       </div>
     );
   }
@@ -18,40 +19,55 @@ export default function PortfolioHeatmap({ portfolio }: Props) {
   const totalHoldings = portfolio.holdings_value || 1;
 
   return (
-    <div className="flex flex-wrap gap-1 p-2 h-full content-start">
+    <div className="flex flex-wrap gap-1.5 p-2 h-full content-start overflow-auto">
       {portfolio.positions.map((pos) => {
         const weight = pos.current_value / totalHoldings;
         const pnlPct = pos.pnl_percent;
-        const intensity = Math.min(Math.abs(pnlPct) / 10, 1);
+        const intensity = Math.min(Math.abs(pnlPct) / 12, 1);
 
-        const bgColor = pnlPct > 0
-          ? `rgba(63, 185, 80, ${0.15 + intensity * 0.4})`
-          : pnlPct < 0
-          ? `rgba(248, 81, 73, ${0.15 + intensity * 0.4})`
-          : "rgba(139, 148, 158, 0.15)";
+        const isUp = pnlPct > 0;
+        const isDown = pnlPct < 0;
 
-        const borderColor = pnlPct > 0 ? "#3fb950" : pnlPct < 0 ? "#f85149" : "#30363d";
-        const minW = Math.max(weight * 100, 15);
+        const bg = isUp
+          ? `rgba(63, 185, 80, ${0.08 + intensity * 0.35})`
+          : isDown
+          ? `rgba(248, 81, 73, ${0.08 + intensity * 0.35})`
+          : "rgba(139, 148, 158, 0.08)";
+
+        const border = isUp
+          ? `rgba(63, 185, 80, ${0.25 + intensity * 0.4})`
+          : isDown
+          ? `rgba(248, 81, 73, ${0.25 + intensity * 0.4})`
+          : "#30363d";
+
+        const minW = Math.max(weight * 100, 12);
 
         return (
           <div
             key={pos.ticker}
             style={{
               width: `${minW}%`,
-              minWidth: 60,
-              flexGrow: weight * 10,
-              backgroundColor: bgColor,
-              borderColor,
+              minWidth: 64,
+              flexGrow: weight * 12,
+              backgroundColor: bg,
+              borderColor: border,
             }}
-            className="border rounded p-2 flex flex-col justify-between min-h-[60px] cursor-default"
+            className="border rounded-md p-2 flex flex-col justify-between min-h-[64px] cursor-default transition-all hover:brightness-125"
           >
-            <span className="font-mono text-xs font-semibold text-text">{pos.ticker}</span>
+            <div className="flex items-start justify-between gap-1">
+              <span className="font-mono text-xs font-bold text-text leading-none">{pos.ticker}</span>
+              <span className={`font-mono text-[9px] font-semibold tabular-nums leading-none px-1 py-0.5 rounded ${
+                isUp ? "text-up" : isDown ? "text-down" : "text-text-dim"
+              }`}>
+                {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
+              </span>
+            </div>
             <div>
-              <div className="font-mono text-[11px] text-text-dim tabular-nums">
+              <div className="font-mono text-[10px] text-text tabular-nums font-semibold">
                 ${pos.current_value.toFixed(0)}
               </div>
-              <div className={`font-mono text-[11px] tabular-nums font-semibold ${pnlPct >= 0 ? "text-up" : "text-down"}`}>
-                {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
+              <div className="font-mono text-[9px] text-text-dim tabular-nums mt-0.5">
+                {(weight * 100).toFixed(1)}% wt
               </div>
             </div>
           </div>

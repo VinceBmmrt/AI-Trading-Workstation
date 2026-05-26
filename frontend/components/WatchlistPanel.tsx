@@ -53,9 +53,9 @@ export default function WatchlistPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Column headers */}
-      <div className="grid grid-cols-[2fr_2fr_1.5fr_1fr] px-3 py-1.5 border-b border-border-subtle">
+      <div className="grid grid-cols-[2fr_2fr_1.5fr_20px] px-3 py-1.5 border-b border-border-subtle">
         {["TICKER", "PRICE", "CHG%", ""].map((h) => (
-          <span key={h} className="text-[10px] font-mono text-text-dim uppercase tracking-wider">{h}</span>
+          <span key={h} className="text-[9px] font-mono text-text-dim uppercase tracking-widest">{h}</span>
         ))}
       </div>
 
@@ -75,37 +75,40 @@ export default function WatchlistPanel({
               key={ticker}
               onClick={() => onSelectTicker(ticker)}
               className={[
-                "grid grid-cols-[2fr_2fr_1.5fr_1fr] items-center px-3 py-2 cursor-pointer border-b border-border-subtle transition-colors",
-                isSelected ? "bg-surface-2" : "hover:bg-surface-2",
+                "group",
+                "grid grid-cols-[2fr_2fr_1.5fr_20px] items-center px-3 py-2 cursor-pointer border-b border-border-subtle transition-all duration-100",
+                isSelected
+                  ? "bg-surface-2 border-l-2 border-l-accent"
+                  : "hover:bg-surface-2 border-l-2 border-l-transparent",
                 flash === "up" ? "flash-up" : flash === "down" ? "flash-down" : "",
               ].join(" ")}
             >
-              <span className={`font-mono text-xs font-semibold ${isSelected ? "text-accent" : "text-text"}`}>
+              <span className={`font-mono text-xs font-semibold tracking-wide ${isSelected ? "text-accent" : "text-text"}`}>
                 {ticker}
               </span>
               <span className={`font-mono text-xs tabular-nums ${isUp ? "text-up" : isDown ? "text-down" : "text-text"}`}>
                 {update ? `$${update.price.toFixed(2)}` : "—"}
               </span>
-              <span className={`font-mono text-xs tabular-nums ${isUp ? "text-up" : isDown ? "text-down" : "text-text-dim"}`}>
-                {update ? `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%` : "—"}
-              </span>
-              <div className="flex items-center gap-1">
-                <Sparkline data={hist} width={44} height={18} />
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleRemove(ticker); }}
-                  className="opacity-0 hover:opacity-100 group-hover:opacity-100 text-text-dim hover:text-down text-xs ml-1 leading-none"
-                  aria-label={`Remove ${ticker}`}
-                >
-                  ×
-                </button>
+              <div className="flex items-center gap-1.5">
+                <span className={`font-mono text-[10px] tabular-nums ${isUp ? "text-up" : isDown ? "text-down" : "text-text-dim"}`}>
+                  {update ? `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%` : "—"}
+                </span>
+                <Sparkline data={hist} width={36} height={16} />
               </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleRemove(ticker); }}
+                className="opacity-0 group-hover:opacity-60 hover:!opacity-100 text-text-dim hover:text-down text-xs leading-none transition-opacity"
+                aria-label={`Remove ${ticker}`}
+              >
+                ×
+              </button>
             </div>
           );
         })}
       </div>
 
       {/* Add ticker form */}
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-border shrink-0">
         <form onSubmit={handleAdd} className="flex gap-1.5">
           <input
             type="text"
@@ -113,16 +116,16 @@ export default function WatchlistPanel({
             onChange={(e) => setAddInput(e.target.value.toUpperCase())}
             placeholder="ADD TICKER"
             maxLength={5}
-            className="flex-1 bg-bg border border-border rounded px-2 py-1 text-xs font-mono text-text placeholder-text-dim uppercase focus:outline-none focus:border-blue"
+            className="flex-1 bg-bg border border-border rounded px-2 py-1.5 text-[11px] font-mono text-text placeholder-text-dim uppercase focus:outline-none focus:border-blue focus:blue-glow transition-colors"
           />
           <button
             type="submit"
-            className="px-2.5 py-1 bg-blue/20 border border-blue/40 rounded text-xs font-mono text-blue hover:bg-blue/30 transition-colors"
+            className="px-3 py-1.5 bg-blue/15 border border-blue/40 rounded text-xs font-mono text-blue hover:bg-blue/25 transition-colors"
           >
             +
           </button>
         </form>
-        {addError && <p className="text-down text-[10px] font-mono mt-1">{addError}</p>}
+        {addError && <p className="text-down text-[10px] font-mono mt-1.5 leading-tight">{addError}</p>}
       </div>
     </div>
   );

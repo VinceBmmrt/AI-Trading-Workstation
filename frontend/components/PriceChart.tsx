@@ -22,29 +22,57 @@ export default function PriceChart({ ticker, prices, history }: Props) {
 
     let cleanup: (() => void) | undefined;
 
-    import("lightweight-charts").then(({ createChart, LineSeries }) => {
+    import("lightweight-charts").then(({ createChart, AreaSeries }) => {
       if (!containerRef.current) return;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const chart: any = createChart(containerRef.current, {
-        layout: { background: { color: "#161b22" }, textColor: "#8b949e" },
-        grid: { vertLines: { color: "#21262d" }, horzLines: { color: "#21262d" } },
-        crosshair: { mode: 1 },
-        rightPriceScale: { borderColor: "#30363d" },
-        timeScale: { borderColor: "#30363d", timeVisible: true, secondsVisible: false },
+        layout: {
+          background: { color: "#161b22" },
+          textColor: "#7d8590",
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: 11,
+        },
+        grid: {
+          vertLines: { color: "#1c2128", style: 1 },
+          horzLines: { color: "#1c2128", style: 1 },
+        },
+        crosshair: {
+          mode: 1,
+          vertLine: { color: "#30363d", labelBackgroundColor: "#22272e" },
+          horzLine: { color: "#30363d", labelBackgroundColor: "#22272e" },
+        },
+        rightPriceScale: {
+          borderColor: "#21262d",
+          textColor: "#7d8590",
+        },
+        timeScale: {
+          borderColor: "#21262d",
+          timeVisible: true,
+          secondsVisible: false,
+          fixLeftEdge: false,
+          fixRightEdge: false,
+        },
         handleScale: { mouseWheel: true, pinch: true },
         handleScroll: { mouseWheel: true, pressedMouseMove: true },
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const series: any = chart.addSeries(LineSeries, {
-        color: "#209dd7",
+      const series: any = chart.addSeries(AreaSeries, {
+        lineColor: "#209dd7",
+        topColor: "rgba(32, 157, 215, 0.18)",
+        bottomColor: "rgba(32, 157, 215, 0.01)",
         lineWidth: 2,
         crosshairMarkerVisible: true,
+        crosshairMarkerRadius: 4,
+        crosshairMarkerBorderColor: "#209dd7",
+        crosshairMarkerBackgroundColor: "#0d1117",
         priceLineVisible: true,
         priceLineColor: "#ecad0a",
         priceLineStyle: 2,
+        priceLineWidth: 1,
         lastValueVisible: true,
+        lastPriceAnimation: 1,
       });
 
       chartRef.current = chart;
@@ -101,21 +129,35 @@ export default function PriceChart({ ticker, prices, history }: Props) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-baseline gap-3 px-4 py-2 border-b border-border shrink-0">
-        <span className="font-mono font-semibold text-accent">{ticker}</span>
-        {update && (
+      {/* Chart header */}
+      <div className="flex items-center gap-4 px-4 py-2.5 border-b border-border shrink-0">
+        <span className="font-mono font-bold text-accent text-sm tracking-wider uppercase">{ticker}</span>
+
+        {update ? (
           <>
-            <span className={`font-mono text-xl font-semibold tabular-nums ${isUp ? "text-up" : isDown ? "text-down" : "text-text"}`}>
+            <span className={`font-mono text-2xl font-semibold tabular-nums leading-none ${
+              isUp ? "text-up" : isDown ? "text-down" : "text-text"
+            }`}>
               ${update.price.toFixed(2)}
             </span>
-            <span className={`font-mono text-sm tabular-nums ${isUp ? "text-up" : isDown ? "text-down" : "text-text-dim"}`}>
-              {update.change >= 0 ? "+" : ""}{update.change.toFixed(2)}
-              {" "}({update.change_percent >= 0 ? "+" : ""}{update.change_percent.toFixed(2)}%)
-              {" "}{isUp ? "▲" : isDown ? "▼" : "—"}
-            </span>
+
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-mono font-semibold tabular-nums ${
+              isUp
+                ? "bg-up/10 border border-up/25 text-up"
+                : isDown
+                ? "bg-down/10 border border-down/25 text-down"
+                : "bg-surface-2 border border-border text-text-dim"
+            }`}>
+              <span>{isUp ? "▲" : isDown ? "▼" : "—"}</span>
+              <span>{update.change >= 0 ? "+" : ""}{update.change.toFixed(2)}</span>
+              <span className="opacity-70">({update.change_percent >= 0 ? "+" : ""}{update.change_percent.toFixed(2)}%)</span>
+            </div>
           </>
+        ) : (
+          <span className="text-text-dim text-xs font-mono">Waiting for data…</span>
         )}
       </div>
+
       <div ref={containerRef} className="flex-1 min-h-0" />
     </div>
   );
