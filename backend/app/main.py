@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from .db import DEFAULT_TICKERS, get_db, init_db, take_snapshot  # noqa: E402
@@ -70,6 +71,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="AI Trading Workstation", lifespan=lifespan)
+
+# Allow the Next.js dev server (port 3000) to reach the API during development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:8000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(health.router)
 app.include_router(create_stream_router(_price_cache))
