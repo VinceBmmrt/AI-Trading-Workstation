@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0d1117;
+  --color-surface: #161b22;
+  --color-surface-2: #1c2128;
+  --color-border: #30363d;
+  --color-border-subtle: #21262d;
+  --color-muted: #8b949e;
+  --color-text: #e6edf3;
+  --color-text-dim: #7d8590;
+  --color-accent: #ecad0a;
+  --color-blue: #209dd7;
+  --color-purple: #753991;
+  --color-up: #3fb950;
+  --color-down: #f85149;
+  --color-up-dim: #1a3d22;
+  --color-down-dim: #3d1a1a;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-ibm-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+/* Price flash animations */
+@keyframes flash-up {
+  0%   { background-color: rgba(63, 185, 80, 0.25); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flash-down {
+  0%   { background-color: rgba(248, 81, 73, 0.25); }
+  100% { background-color: transparent; }
+}
+
+.flash-up   { animation: flash-up   500ms ease-out forwards; }
+.flash-down { animation: flash-down 500ms ease-out forwards; }
+
+/* Custom scrollbars */
+::-webkit-scrollbar              { width: 4px; height: 4px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: #30363d; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover  { background: #8b949e; }
