@@ -10,6 +10,86 @@ A visually rich, AI-powered trading terminal. Stream live market data, trade a s
 - **AI chat assistant** — ask about your portfolio, request trades, manage your watchlist in natural language
 - **Watchlist management** — add/remove tickers manually or through the AI
 
+## Quick Start (Docker)
+
+**1. Set up your environment:**
+```powershell
+copy .env.example .env
+# Edit .env and add your OPENROUTER_API_KEY
+```
+
+**2. Build and run (first time):**
+```powershell
+.\scripts\start_windows.ps1 -Build
+```
+
+**Subsequent runs** (image already built):
+```powershell
+.\scripts\start_windows.ps1
+```
+
+Open [http://localhost:8000](http://localhost:8000).
+
+**Stop:**
+```powershell
+.\scripts\stop_windows.ps1
+```
+
+**Rebuild after code changes:**
+```powershell
+.\scripts\start_windows.ps1 -Build
+```
+
+---
+
+## Local Dev (no Docker, faster iteration)
+
+**Terminal 1 — Backend:**
+```powershell
+cd backend
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+**Terminal 2 — Frontend:**
+```powershell
+cd frontend
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+> The frontend dev server proxies API calls to `localhost:8000` automatically.
+
+---
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `OPENROUTER_API_KEY` | Yes | Powers the AI chat assistant |
+| `MASSIVE_API_KEY` | No | Real market data (Polygon.io); simulator used if absent |
+| `LLM_MOCK` | No | Set `true` for deterministic mock LLM responses (testing) |
+
+---
+
+## Tests
+
+**Backend unit tests (128 tests):**
+```powershell
+cd backend
+uv run --extra dev pytest tests/ -v
+```
+
+**E2E Playwright tests** (requires the app running on port 8000):
+```powershell
+cd test
+npm install
+npx playwright install chromium
+npx playwright test --reporter=list
+```
+
+---
+
 ## Architecture
 
 Single Docker container on port 8000. FastAPI serves both the REST/SSE API and the static Next.js frontend.
@@ -20,47 +100,10 @@ FastAPI (Python/uv)
 ├── /api/stream/*   SSE price stream
 └── /*              Static Next.js export
 
-SQLite (volume-mounted)
+SQLite (volume-mounted at /app/db)
 Market data: GBM simulator (default) or Massive/Polygon.io API
 LLM: LiteLLM → OpenRouter (Cerebras inference)
 ```
-
-## Quick Start
-
-```bash
-# Copy and fill in your API key
-cp .env.example .env
-
-# Build and run (Docker required)
-docker run -v ai-trading-workstation-data:/app/db \
-           -p 8000:8000 \
-           --env-file .env \
-           ai-trading-workstation
-```
-
-Then open [http://localhost:8000](http://localhost:8000).
-
-## Environment Variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `OPENROUTER_API_KEY` | Yes | Powers the AI chat assistant |
-| `MASSIVE_API_KEY` | No | Real market data (Polygon.io); simulator used if absent |
-| `LLM_MOCK` | No | Set `true` for deterministic mock LLM responses (testing) |
-
-## Development
-
-```bash
-# Backend
-cd backend
-uv sync --dev
-uv run pytest -v
-
-# Live market data demo (terminal dashboard)
-uv run market_data_demo.py
-```
-
-See `backend/README.md` for full backend documentation.
 
 ## Tech Stack
 

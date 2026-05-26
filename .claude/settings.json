@@ -3,6 +3,32 @@
     "frontend-design@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,
-    "independant-reviewer@vince-tools": true
+    "independant-reviewer@vince-tools": false,
+    "context7@netresearch-claude-code-marketplace": true
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "teammateMode": "in-process",
+  "permissions": {
+    "allow": [
+      "Write",
+      "Edit",
+      "Bash(npm run build)",
+      "Bash(npm run dev)",
+      "Bash(npm ci)",
+      "Bash(npm install)",
+      "Bash(uv run*)",
+      "Bash(uv add*)",
+      "Bash(uv sync*)",
+      "Bash(mkdir*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git status*)",
+      "Bash(npx playwright*)",
+      "Bash(npx*)",
+      "Bash(cd*)",
+      "PowerShell(*)"
+    ]
   }
 }
