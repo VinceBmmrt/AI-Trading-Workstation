@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ConnectionStatus, Portfolio } from "@/lib/types";
 
 interface Props {
@@ -8,85 +9,149 @@ interface Props {
 }
 
 const STATUS_DOT: Record<ConnectionStatus, string> = {
-  connected: "bg-up shadow-[0_0_6px_#3fb950]",
+  connected: "bg-up shadow-[0_0_5px_rgba(63,185,80,0.8)]",
   reconnecting: "bg-accent animate-pulse",
   disconnected: "bg-down",
 };
 
 const STATUS_LABEL: Record<ConnectionStatus, string> = {
   connected: "LIVE",
-  reconnecting: "RECONNECTING",
+  reconnecting: "RECONNECTING…",
   disconnected: "OFFLINE",
+};
+
+const STATUS_TEXT: Record<ConnectionStatus, string> = {
+  connected: "text-up",
+  reconnecting: "text-accent",
+  disconnected: "text-down",
 };
 
 const STARTING_CAPITAL = 10_000;
 
+function fmt(n: number) {
+  return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function Header({ portfolio, status }: Props) {
-  const totalValue = portfolio?.total_value ?? 0;
-  const cash = portfolio?.cash_balance ?? 0;
-  const netPnL = portfolio ? totalValue - STARTING_CAPITAL : null;
-  const netPnLPct = netPnL !== null ? (netPnL / STARTING_CAPITAL) * 100 : null;
-  const isProfit = netPnL !== null && netPnL >= 0;
+  const [time, setTime] = useState<string>("");
+
+  useEffect(() => {
+    function tick() {
+      const now = new Date();
+      setTime(
+        now.toLocaleTimeString("en-US", {
+          hour: "2-digit", minute: "2-digit", second: "2-digit",
+          hour12: false, timeZoneName: "short",
+        })
+      );
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const totalValue  = portfolio?.total_value   ?? 0;
+  const cash        = portfolio?.cash_balance  ?? 0;
+  const holdings    = portfolio?.holdings_value ?? 0;
+  const netPnL      = portfolio ? totalValue - STARTING_CAPITAL : null;
+  const netPnLPct   = netPnL !== null ? (netPnL / STARTING_CAPITAL) * 100 : null;
+  const isProfit    = netPnL !== null && netPnL >= 0;
+  const posCount    = portfolio?.positions.length ?? 0;
 
   return (
-    <header className="relative flex items-center justify-between px-5 h-12 bg-surface border-b border-border shrink-0">
-      {/* Accent top line */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
+    <header className="relative flex items-center justify-between px-5 h-11 bg-surface border-b border-border shrink-0 z-20">
+      {/* Accent gradient top line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent pointer-events-none" />
 
-      {/* Left: brand */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-accent font-mono font-bold tracking-widest text-sm uppercase">
-            Finance Ally
-          </span>
-          <span className="hidden sm:inline text-border text-xs">│</span>
-          <span className="hidden sm:inline text-text-dim text-[10px] font-mono uppercase tracking-widest">
-            AI Trading Workstation
-          </span>
-        </div>
+      {/* LEFT — brand */}
+      <div className="flex items-center gap-3 shrink-0">
+        <span className="font-mono font-bold text-sm tracking-[0.18em] text-accent uppercase select-none">
+          Finance Ally
+        </span>
+        <span className="text-border/60 text-[10px]">│</span>
+        <span className="hidden md:inline font-mono text-[10px] text-text-dim tracking-[0.12em] uppercase">
+          AI Trading Workstation
+        </span>
       </div>
 
-      {/* Right: metrics + status */}
-      <div className="flex items-center gap-5">
+      {/* CENTER — portfolio metrics */}
+      <div className="flex items-center gap-1">
         {/* Portfolio total */}
-        <div className="flex flex-col items-end">
-          <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest leading-none mb-0.5">Portfolio</span>
-          <span className="font-mono font-semibold text-sm text-text tabular-nums leading-none">
-            ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        <div className="flex flex-col items-center px-4 py-0.5">
+          <span className="text-[8px] font-mono text-text-dim uppercase tracking-widest leading-none">Portfolio</span>
+          <span className="font-mono font-semibold text-[13px] text-text tabular-nums leading-tight mt-0.5">
+            ${fmt(totalValue)}
           </span>
         </div>
+
+        <span className="text-border/40 text-xs">│</span>
 
         {/* Net P&L */}
         {netPnL !== null && (
-          <div className={`flex flex-col items-end px-2.5 py-1 rounded border ${
+          <div className={`flex flex-col items-center px-3 py-1 mx-1 rounded border ${
             isProfit
-              ? "border-up/30 bg-up/5"
-              : "border-down/30 bg-down/5"
+              ? "bg-up/[0.07] border-up/20"
+              : "bg-down/[0.07] border-down/20"
           }`}>
-            <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest leading-none mb-0.5">
-              {isProfit ? "Gain" : "Loss"}
+            <span className="text-[8px] font-mono text-text-dim uppercase tracking-widest leading-none">
+              {isProfit ? "Unrealized Gain" : "Unrealized Loss"}
             </span>
-            <span className={`font-mono font-semibold text-sm tabular-nums leading-none ${isProfit ? "text-up" : "text-down"}`}>
-              {isProfit ? "+" : ""}${netPnL.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              <span className="text-[10px] font-normal ml-1 opacity-80">
-                ({netPnLPct !== null ? `${isProfit ? "+" : ""}${netPnLPct.toFixed(2)}%` : ""})
-              </span>
-            </span>
+            <div className={`flex items-baseline gap-1.5 mt-0.5 font-mono tabular-nums font-semibold text-[13px] leading-tight ${
+              isProfit ? "text-up" : "text-down"
+            }`}>
+              <span>{isProfit ? "+" : "−"}${fmt(Math.abs(netPnL))}</span>
+              {netPnLPct !== null && (
+                <span className="text-[10px] opacity-75 font-normal">
+                  ({isProfit ? "+" : ""}{netPnLPct.toFixed(2)}%)
+                </span>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Cash */}
-        <div className="flex flex-col items-end">
-          <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest leading-none mb-0.5">Cash</span>
-          <span className="font-mono text-sm text-text tabular-nums leading-none">
-            ${cash.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        <span className="text-border/40 text-xs">│</span>
+
+        {/* Holdings */}
+        <div className="flex flex-col items-center px-4 py-0.5">
+          <span className="text-[8px] font-mono text-text-dim uppercase tracking-widest leading-none">Holdings</span>
+          <span className="font-mono text-[13px] text-text tabular-nums leading-tight mt-0.5">
+            ${fmt(holdings)}
           </span>
         </div>
 
-        {/* Connection status */}
-        <div className="flex items-center gap-1.5 border-l border-border pl-5">
+        <span className="text-border/40 text-xs">│</span>
+
+        {/* Cash */}
+        <div className="flex flex-col items-center px-4 py-0.5">
+          <span className="text-[8px] font-mono text-text-dim uppercase tracking-widest leading-none">Cash</span>
+          <span className="font-mono text-[13px] text-text tabular-nums leading-tight mt-0.5">
+            ${fmt(cash)}
+          </span>
+        </div>
+
+        {posCount > 0 && (
+          <>
+            <span className="text-border/40 text-xs">│</span>
+            <div className="flex flex-col items-center px-3 py-0.5">
+              <span className="text-[8px] font-mono text-text-dim uppercase tracking-widest leading-none">Positions</span>
+              <span className="font-mono text-[13px] text-blue tabular-nums leading-tight mt-0.5">{posCount}</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* RIGHT — clock + status */}
+      <div className="flex items-center gap-4 shrink-0">
+        {time && (
+          <span className="font-mono text-[11px] text-text-dim tabular-nums tracking-wider hidden lg:block">
+            {time}
+          </span>
+        )}
+        <div className="flex items-center gap-2 border-l border-border pl-4">
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[status]}`} />
-          <span className="text-[10px] font-mono text-text-dim tracking-wider">{STATUS_LABEL[status]}</span>
+          <span className={`text-[10px] font-mono tracking-widest ${STATUS_TEXT[status]}`}>
+            {STATUS_LABEL[status]}
+          </span>
         </div>
       </div>
     </header>

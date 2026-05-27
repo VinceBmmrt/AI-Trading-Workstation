@@ -9,6 +9,7 @@ import PositionsTable from "@/components/PositionsTable";
 import PnLChart from "@/components/PnLChart";
 import TradeBar from "@/components/TradeBar";
 import ChatPanel from "@/components/ChatPanel";
+import StatusBar from "@/components/StatusBar";
 import { useMarketData } from "@/hooks/useMarketData";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { fetchWatchlist } from "@/lib/api";
@@ -44,16 +45,19 @@ export default function TradingPage() {
       .catch(() => {});
   }
 
+  const priceCount = market.prices.size;
+
   return (
     <div className="flex flex-col h-full bg-bg">
       <Header portfolio={portfolio} status={market.status} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* LEFT: Watchlist + Trade Bar */}
+
+        {/* LEFT — Watchlist + Trade Bar */}
         <aside className="w-56 flex flex-col border-r border-border shrink-0 min-h-0">
-          <div className="px-3 py-2 border-b border-border shrink-0">
+          <div className="px-3 py-1.5 border-b border-border shrink-0 flex items-center justify-between">
             <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Watchlist</span>
-            <span className="ml-2 text-[9px] font-mono text-text-dim/40">{tickers.length}</span>
+            <span className="text-[9px] font-mono text-text-dim/40 tabular-nums">{tickers.length}</span>
           </div>
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             <WatchlistPanel
@@ -66,17 +70,26 @@ export default function TradingPage() {
               onWatchlistChange={refreshWatchlist}
             />
           </div>
-          <TradeBar selectedTicker={selectedTicker} onTradeComplete={refreshPortfolio} />
+          <TradeBar
+            selectedTicker={selectedTicker}
+            prices={market.prices}
+            onTradeComplete={refreshPortfolio}
+          />
         </aside>
 
-        {/* CENTER: Chart + Portfolio */}
+        {/* CENTER — Chart + Portfolio */}
         <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-          {/* Price chart: 60% */}
+
+          {/* Price chart — 60% */}
           <div className="flex-[3] min-h-0 border-b border-border overflow-hidden">
-            <PriceChart ticker={selectedTicker} prices={market.prices} history={market.history} />
+            <PriceChart
+              ticker={selectedTicker}
+              prices={market.prices}
+              history={market.history}
+            />
           </div>
 
-          {/* Portfolio panel: 40% */}
+          {/* Portfolio panel — 40% */}
           <div className="flex-[2] min-h-0 flex flex-col overflow-hidden">
             {/* Tab bar */}
             <div className="flex items-center border-b border-border shrink-0 px-1 bg-surface">
@@ -96,21 +109,21 @@ export default function TradingPage() {
               {portfolio && (
                 <div className="ml-auto flex items-center gap-3 pr-3 text-[9px] font-mono text-text-dim uppercase tracking-widest">
                   <span>{portfolio.positions.length} pos</span>
-                  <span className="text-border">│</span>
-                  <span>${portfolio.holdings_value.toFixed(0)} holdings</span>
+                  <span className="text-border/40">│</span>
+                  <span>${portfolio.holdings_value.toLocaleString("en-US", { maximumFractionDigits: 0 })} invested</span>
                 </div>
               )}
             </div>
 
             <div className="flex-1 min-h-0 overflow-auto">
               {portfolioTab === "positions" && <PositionsTable portfolio={portfolio} />}
-              {portfolioTab === "heatmap" && <PortfolioHeatmap portfolio={portfolio} />}
-              {portfolioTab === "pnl" && <PnLChart history={history} />}
+              {portfolioTab === "heatmap"   && <PortfolioHeatmap portfolio={portfolio} />}
+              {portfolioTab === "pnl"       && <PnLChart history={history} />}
             </div>
           </div>
         </main>
 
-        {/* RIGHT: Chat panel (collapsible) */}
+        {/* RIGHT — Chat panel (collapsible) */}
         <aside
           className={`flex flex-col border-l border-border shrink-0 min-h-0 transition-all duration-200 ${
             chatOpen ? "w-72" : "w-8"
@@ -118,20 +131,23 @@ export default function TradingPage() {
         >
           <button
             onClick={() => setChatOpen((o) => !o)}
-            className={`h-12 border-b border-border flex items-center shrink-0 transition-colors hover:bg-surface-2 ${
+            className={`h-11 border-b border-border flex items-center shrink-0 transition-colors hover:bg-surface-2 ${
               chatOpen ? "justify-between px-3" : "justify-center"
             }`}
           >
             {chatOpen ? (
               <>
                 <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue/80 shadow-[0_0_4px_#209dd7]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue/80 shadow-[0_0_4px_rgba(32,157,215,0.8)]" />
                   <span className="text-[10px] font-mono uppercase tracking-widest text-text-dim">AI Chat</span>
                 </div>
-                <span className="text-text-dim/60 text-sm">×</span>
+                <span className="text-text-dim/50 text-base leading-none">×</span>
               </>
             ) : (
-              <span className="text-[9px] font-mono text-text-dim/60 uppercase tracking-widest rotate-90 whitespace-nowrap">AI</span>
+              <span className="text-[8px] font-mono text-text-dim/50 uppercase tracking-widest"
+                    style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
+                AI
+              </span>
             )}
           </button>
           {chatOpen && (
@@ -141,6 +157,9 @@ export default function TradingPage() {
           )}
         </aside>
       </div>
+
+      {/* Bottom status bar */}
+      <StatusBar status={market.status} priceCount={priceCount} />
     </div>
   );
 }
