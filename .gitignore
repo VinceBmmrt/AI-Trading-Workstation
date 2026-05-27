@@ -197,8 +197,11 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Playwright MCP recordings
+# Playwright MCP recordings and screenshots
 .playwright-mcp/
+/*.png
+/*.jpg
+/*.jpeg
 
 # Test dependencies
 test/node_modules/
