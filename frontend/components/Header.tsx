@@ -109,10 +109,10 @@ export default function Header({ portfolio, status }: Props) {
           </div>
         )}
 
-        <span className="text-border/40 text-xs">│</span>
+        <span className="hidden lg:inline text-border/40 text-xs">│</span>
 
-        {/* Holdings */}
-        <div className="flex flex-col items-center px-4 py-0.5">
+        {/* Holdings — hidden on tablet */}
+        <div className="hidden lg:flex flex-col items-center px-4 py-0.5">
           <span className="text-[8px] font-mono text-text-dim uppercase tracking-widest leading-none">Holdings</span>
           <span className="font-mono text-[13px] text-text tabular-nums leading-tight mt-0.5">
             ${fmt(holdings)}
@@ -131,8 +131,8 @@ export default function Header({ portfolio, status }: Props) {
 
         {posCount > 0 && (
           <>
-            <span className="text-border/40 text-xs">│</span>
-            <div className="flex flex-col items-center px-3 py-0.5">
+            <span className="hidden lg:inline text-border/40 text-xs">│</span>
+            <div className="hidden lg:flex flex-col items-center px-3 py-0.5">
               <span className="text-[8px] font-mono text-text-dim uppercase tracking-widest leading-none">Positions</span>
               <span className="font-mono text-[13px] text-blue tabular-nums leading-tight mt-0.5">{posCount}</span>
             </div>

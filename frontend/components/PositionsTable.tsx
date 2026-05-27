@@ -23,7 +23,8 @@ export default function PositionsTable({ portfolio }: Props) {
   const maxAbsPnlPct = Math.max(...portfolio.positions.map((p) => Math.abs(p.pnl_percent)), 0.01);
 
   return (
-    <table className="w-full text-left border-collapse">
+    <div className="overflow-x-auto w-full">
+    <table className="w-full text-left border-collapse min-w-[520px]">
       <thead>
         <tr className="border-b border-border sticky top-0 bg-surface z-10">
           {["Ticker", "Qty", "Avg Cost", "Price", "Value", "P&L", "%"].map((h) => (
@@ -67,5 +68,6 @@ export default function PositionsTable({ portfolio }: Props) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }

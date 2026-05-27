@@ -31,6 +31,11 @@ export default function TradingPage() {
   const [tickers, setTickers] = useState<string[]>(DEFAULT_TICKERS);
   const [selectedTicker, setSelectedTicker] = useState("AAPL");
   const [chatOpen, setChatOpen] = useState(true);
+
+  // Collapse chat panel on narrow screens on first mount
+  useEffect(() => {
+    if (window.innerWidth < 1024) setChatOpen(false);
+  }, []);
   const [portfolioTab, setPortfolioTab] = useState<PortfolioTab>("positions");
 
   useEffect(() => {
@@ -48,7 +53,7 @@ export default function TradingPage() {
   const priceCount = market.prices.size;
 
   return (
-    <div className="flex flex-col h-full bg-bg">
+    <div className="flex flex-col h-full min-w-[720px] bg-bg">
       <Header portfolio={portfolio} status={market.status} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
