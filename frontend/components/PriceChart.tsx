@@ -355,20 +355,20 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
   return (
     <div className="flex flex-col h-full">
       {/* Chart header */}
-      <div className="flex items-center gap-0 px-4 py-2 border-b border-border shrink-0 bg-surface overflow-x-auto">
-        {/* Ticker + price */}
-        <div className="flex items-baseline gap-3 flex-1 min-w-0">
+      <div className="flex items-center gap-0 px-4 py-2 border-b border-border shrink-0 bg-surface min-w-0">
+        {/* Ticker + price — truncates when space is tight */}
+        <div className="flex items-baseline gap-3 flex-1 min-w-0 overflow-hidden">
           <span className="font-mono font-bold text-accent text-[13px] tracking-[0.12em] uppercase shrink-0">
             {ticker}
           </span>
           {update ? (
             <>
-              <span className={`font-mono text-[22px] font-semibold tabular-nums leading-none ${
+              <span className={`font-mono text-[22px] font-semibold tabular-nums leading-none shrink-0 ${
                 isUp ? "text-up" : isDown ? "text-down" : "text-text"
               }`}>
                 ${update.price.toFixed(2)}
               </span>
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-semibold tabular-nums shrink-0 ${
+              <span className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-semibold tabular-nums shrink-0 ${
                 isUp
                   ? "bg-up/10 border border-up/25 text-up"
                   : isDown
@@ -385,9 +385,9 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
           )}
         </div>
 
-        {/* OHLC mini stats */}
+        {/* OHLC mini stats — only when plenty of space */}
         {open && sessionHigh && sessionLow && (
-          <div className="hidden lg:flex items-center gap-4 mr-4 text-[10px] font-mono tabular-nums shrink-0">
+          <div className="hidden xl:flex items-center gap-4 mr-4 text-[10px] font-mono tabular-nums shrink-0">
             <div>
               <span className="text-text-dim mr-1">O</span>
               <span className="text-text">${open.toFixed(2)}</span>
@@ -403,34 +403,34 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
           </div>
         )}
 
-        {/* Time range selector */}
-        <div className="flex items-center gap-0 shrink-0 border border-border rounded overflow-hidden">
-          {(["5m", "15m", "1H", "4H", "ALL"] as Range[]).map((r) => (
-            <button
-              key={r}
-              onClick={() => handleRange(r)}
-              className={`px-2.5 py-1 text-[10px] font-mono tracking-wider transition-colors border-r border-border last:border-r-0 cursor-pointer ${
-                range === r
-                  ? "bg-accent/15 text-accent"
-                  : "text-text-dim hover:text-text hover:bg-surface-2"
-              }`}
-            >
-              {r}
+        {/* Time range + indicator buttons — scroll horizontally if needed */}
+        <div className="flex items-center gap-2 shrink-0 ml-2 overflow-x-auto">
+          <div className="flex items-center gap-0 shrink-0 border border-border rounded overflow-hidden">
+            {(["5m", "15m", "1H", "4H", "ALL"] as Range[]).map((r) => (
+              <button
+                key={r}
+                onClick={() => handleRange(r)}
+                className={`px-2.5 py-1 text-[10px] font-mono tracking-wider transition-colors border-r border-border last:border-r-0 cursor-pointer ${
+                  range === r
+                    ? "bg-accent/15 text-accent"
+                    : "text-text-dim hover:text-text hover:bg-surface-2"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center shrink-0 border border-border rounded overflow-hidden">
+            <button onClick={() => setShowMA((v) => !v)} className={toggleBtnClass(showMA)} style={{ borderLeft: "none" }}>
+              MA
             </button>
-          ))}
-        </div>
-
-        {/* Indicator toggles */}
-        <div className="flex items-center shrink-0 border border-border rounded overflow-hidden ml-2">
-          <button onClick={() => setShowMA((v) => !v)} className={toggleBtnClass(showMA)} style={{ borderLeft: "none" }}>
-            MA
-          </button>
-          <button onClick={() => setShowVol((v) => !v)} className={toggleBtnClass(showVol)}>
-            VOL
-          </button>
-          <button onClick={() => setShowRSI((v) => !v)} className={toggleBtnClass(showRSI)}>
-            RSI
-          </button>
+            <button onClick={() => setShowVol((v) => !v)} className={toggleBtnClass(showVol)}>
+              VOL
+            </button>
+            <button onClick={() => setShowRSI((v) => !v)} className={toggleBtnClass(showRSI)}>
+              RSI
+            </button>
+          </div>
         </div>
       </div>
 
