@@ -5,11 +5,11 @@
 See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A user opens a browser, sees live streaming prices, buys and sells with one click, and converses with an AI that acts on their behalf — all in a single Docker container, zero setup.
-**Current focus:** Phase 8 — Trade History & Portfolio Analytics
+**Current focus:** Phase 8 — Trade History & Portfolio Analytics (execute) | Phase 9 — Technical Indicators (planned)
 
 ## Current Phase
 
-**Phase 8: Trade History & Portfolio Analytics** — 🗓 Planned (plans written 2026-05-27)
+**Phase 8: Trade History & Portfolio Analytics** — 🗓 Planned (plans written 2026-05-27, ready to execute)
 
 Goal: The Positions panel becomes a full analytics dashboard with trade history, performance metrics, and CSV export.
 
@@ -28,6 +28,12 @@ Goal: The Positions panel becomes a full analytics dashboard with trade history,
 - [ ] Analytics cards update live with price changes and new trades
 - [ ] Win rate correctly calculated from closed positions
 - [ ] CSV export downloads valid file with full trade history
+
+## Next Phase
+
+**Phase 9: Technical Indicators & Chart Upgrades** — 🗓 Planned (plans written 2026-05-28)
+
+Goal: PriceChart gains toggleable MA20/MA50 overlays, volume histogram, and RSI(14) sub-panel.
 
 ## Phase History
 
