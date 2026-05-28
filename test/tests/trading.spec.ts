@@ -6,8 +6,8 @@ import { test, expect, type Page } from '@playwright/test';
  * Tests run against the live dev server; DB state persists across runs.
  */
 
-// Scoped watchlist ticker selector: only the spans inside the scrollable watchlist rows.
-const WATCHLIST_TICKER = 'aside div.overflow-y-auto span.font-mono.text-xs.font-semibold';
+// Scoped watchlist ticker selector: only the bold ticker-name span in each watchlist row.
+const WATCHLIST_TICKER = 'aside.w-56 div.overflow-y-auto div.cursor-pointer span.font-mono.font-bold';
 
 test.beforeEach(async ({ page }) => {
   // Wide viewport so the trade bar isn't obscured by the portfolio overflow div
@@ -82,8 +82,8 @@ test('add ticker to watchlist', async ({ page }) => {
   const wlBefore = await apiBefore.json() as Array<{ ticker: string }>;
   const countBefore = wlBefore.length;
 
-  await page.getByPlaceholder('ADD TICKER').fill('XYZQ');
-  await page.getByPlaceholder('ADD TICKER').press('Enter');
+  await page.getByPlaceholder('ADD SYMBOL…').fill('XYZQ');
+  await page.getByPlaceholder('ADD SYMBOL…').press('Enter');
 
   // XYZQ should appear in watchlist rows (DOM check)
   await expect(page.locator(WATCHLIST_TICKER, { hasText: 'XYZQ' })).toBeVisible({ timeout: 10_000 });
@@ -110,7 +110,10 @@ test('remove ticker from watchlist', async ({ page }) => {
     await page.locator(WATCHLIST_TICKER).first().waitFor({ timeout: 15_000 });
   }
 
-  const countBefore = await page.locator(WATCHLIST_TICKER).count();
+  // Use API count as ground truth (not DOM which may be stale)
+  const apiBefore = await page.request.get('/api/watchlist');
+  const wlBefore = await apiBefore.json() as Array<{ ticker: string }>;
+  const countBefore = wlBefore.length;
 
   // Delete via API and reload
   const delResp = await page.request.delete('/api/watchlist/TSLA');
@@ -119,9 +122,16 @@ test('remove ticker from watchlist', async ({ page }) => {
   await page.reload();
   await page.locator(WATCHLIST_TICKER).first().waitFor({ timeout: 15_000 });
 
-  // TSLA should no longer appear
+  // TSLA should no longer appear in DOM
   await expect(page.locator(WATCHLIST_TICKER, { hasText: 'TSLA' })).toHaveCount(0);
-  await expect(page.locator(WATCHLIST_TICKER)).toHaveCount(countBefore - 1);
+
+  // Confirm via API that count decreased
+  await expect(async () => {
+    const apiAfter = await page.request.get('/api/watchlist');
+    const wlAfter = await apiAfter.json() as Array<{ ticker: string }>;
+    expect(wlAfter.length).toBe(countBefore - 1);
+    expect(wlAfter.some((t) => t.ticker === 'TSLA')).toBe(false);
+  }).toPass({ timeout: 5_000 });
 });
 
 // ---------------------------------------------------------------------------
@@ -137,8 +147,8 @@ test('buy 1 AAPL: cash decreases and position appears', async ({ page }) => {
   await tradeBar.locator('input[placeholder="QTY"]').fill('1');
   await tradeBar.getByRole('button', { name: 'BUY' }).click();
 
-  // Trade confirmation (green ✓ message)
-  await expect(page.locator('p.text-up')).toBeVisible({ timeout: 10_000 });
+  // Trade confirmation (green ✓ message in TradeBar aside)
+  await expect(page.locator('aside.w-56 div.text-up')).toBeVisible({ timeout: 10_000 });
 
   // Cash from API should have decreased
   await expect(async () => {
@@ -161,7 +171,7 @@ test('sell 1 AAPL: cash increases after sell', async ({ page }) => {
   await tradeBar.locator('input[maxlength="5"]').fill('AAPL');
   await tradeBar.locator('input[placeholder="QTY"]').fill('1');
   await tradeBar.getByRole('button', { name: 'BUY' }).click();
-  await expect(page.locator('p.text-up')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('div.text-up')).toBeVisible({ timeout: 10_000 });
 
   const cashAfterBuy = await getCashFromApi(page);
 
@@ -176,8 +186,8 @@ test('sell 1 AAPL: cash increases after sell', async ({ page }) => {
   const sellBtn = tradeBar.getByRole('button', { name: 'SELL' });
   await sellBtn.dispatchEvent('click');
 
-  // Wait for sell confirmation — the status message should contain "SELL"
-  await expect(page.locator('p.text-up')).toContainText('SELL', { timeout: 10_000 });
+  // Wait for sell confirmation — the status message should contain "Sold"
+  await expect(page.locator('aside.w-56 div.text-up')).toContainText('Sold', { timeout: 10_000 });
 
   // Cash from API should be higher than after the buy
   await expect(async () => {
@@ -194,12 +204,12 @@ test('heatmap tab renders', async ({ page }) => {
   await tradeBar.locator('input[maxlength="5"]').fill('AAPL');
   await tradeBar.locator('input[placeholder="QTY"]').fill('1');
   await tradeBar.getByRole('button', { name: 'BUY' }).click();
-  await expect(page.locator('p.text-up')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('div.text-up')).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: 'Heatmap' }).click();
 
-  // Heatmap cells: border rounded p-2 flex flex-col justify-between
-  const heatmapCell = page.locator('.border.rounded.p-2.flex.flex-col').first();
+  // Heatmap cells: border rounded-md p-2 flex flex-col justify-between
+  const heatmapCell = page.locator('.border.rounded-md.p-2.flex.flex-col').first();
   await expect(heatmapCell).toBeVisible({ timeout: 10_000 });
 });
 
@@ -209,9 +219,9 @@ test('heatmap tab renders', async ({ page }) => {
 test('pnl tab renders', async ({ page }) => {
   await page.getByRole('button', { name: 'P&L' }).click();
 
-  // Either the chart container or the "NO HISTORY YET" empty state
-  const noHistory = page.getByText('NO HISTORY YET');
-  const chartContainer = page.locator('div.w-full.h-full').last();
+  // Either the empty state text or the chart container (flex-1 div when data exists)
+  const noHistory = page.getByText('No history yet');
+  const chartContainer = page.locator('div.flex-1.min-h-0').last();
 
   await expect(noHistory.or(chartContainer)).toBeVisible({ timeout: 10_000 });
 });
@@ -220,17 +230,17 @@ test('pnl tab renders', async ({ page }) => {
 // Test 8 — AI chat: send a message, get a response
 // ---------------------------------------------------------------------------
 test('ai chat: send message and receive response', async ({ page }) => {
-  const chatInput = page.getByPlaceholder('Ask Finance Ally...');
+  const chatInput = page.getByPlaceholder('Ask Finance Ally…');
   await expect(chatInput).toBeVisible({ timeout: 10_000 });
 
   await chatInput.fill('What is my portfolio?');
-  await page.getByRole('button', { name: 'SEND' }).click();
+  await page.getByRole('button', { name: 'Send message' }).click();
 
   // Wait for the loading dots to disappear (response has arrived)
   await expect(page.locator('.animate-bounce').first()).not.toBeVisible({ timeout: 30_000 });
 
   // There should be at least 2 assistant message bubbles:
   // the welcome message + the new response.
-  const assistantBubbles = page.locator('.bg-surface-2.border.rounded.px-3.py-2');
+  const assistantBubbles = page.locator('.bg-surface-2.rounded-xl.px-3.py-2');
   await expect(assistantBubbles).toHaveCount(2, { timeout: 30_000 });
 });

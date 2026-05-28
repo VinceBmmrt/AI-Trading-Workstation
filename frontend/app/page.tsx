@@ -12,6 +12,7 @@ import ChatPanel from "@/components/ChatPanel";
 import StatusBar from "@/components/StatusBar";
 import TradeHistory from "@/components/TradeHistory";
 import PortfolioAnalyticsPanel from "@/components/PortfolioAnalyticsPanel";
+import MarketSummaryBanner from "@/components/MarketSummaryBanner";
 import { useMarketData } from "@/hooks/useMarketData";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { fetchWatchlist } from "@/lib/api";
@@ -59,6 +60,7 @@ export default function TradingPage() {
   return (
     <div className="flex flex-col h-full min-w-[720px] bg-bg">
       <Header portfolio={portfolio} status={market.status} />
+      <MarketSummaryBanner />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
@@ -102,12 +104,12 @@ export default function TradingPage() {
           {/* Portfolio panel — 40% */}
           <div className="flex-[2] min-h-0 flex flex-col overflow-hidden">
             {/* Tab bar */}
-            <div className="flex items-center border-b border-border shrink-0 px-1 bg-surface">
+            <div className="flex items-center border-b border-border shrink-0 px-1 bg-surface overflow-x-auto">
               {(["positions", "heatmap", "pnl", "history", "analytics"] as PortfolioTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setPortfolioTab(tab)}
-                  className={`px-4 py-2 text-[10px] font-mono uppercase tracking-widest cursor-pointer border-b-2 transition-all ${
+                  className={`shrink-0 px-4 py-2 text-[10px] font-mono uppercase tracking-widest cursor-pointer border-b-2 transition-all ${
                     portfolioTab === tab
                       ? "border-accent text-accent bg-accent/5"
                       : "border-transparent text-text-dim hover:text-text hover:border-border"
@@ -117,7 +119,7 @@ export default function TradingPage() {
                 </button>
               ))}
               {portfolio && (
-                <div className="ml-auto flex items-center gap-3 pr-3 text-[9px] font-mono text-text-dim uppercase tracking-widest">
+                <div className="ml-auto shrink-0 flex items-center gap-3 pr-3 text-[9px] font-mono text-text-dim uppercase tracking-widest">
                   <span>{portfolio.positions.length} pos</span>
                   <span className="text-border/40">│</span>
                   <span>${portfolio.holdings_value.toLocaleString("en-US", { maximumFractionDigits: 0 })} invested</span>

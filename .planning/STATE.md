@@ -9,23 +9,17 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Current Phase
 
-**Phase 10: AI Intelligence Upgrade** — 🗓 Planned (plans written 2026-05-28, ready to execute)
+**Phase 10: AI Intelligence Upgrade** — ✅ Completed (2026-05-28)
 
-Goal: PriceChart gains toggleable MA20/MA50 overlays, volume histogram, and RSI(14) sub-panel.
+Goal: Proactive market alerts, enriched LLM context, polling endpoint, market-summary endpoint, slash commands, MarketSummaryBanner.
 
 ### Active Work
 
-| Item | Status | Notes |
-|------|--------|-------|
-| indicators.ts library | ⏳ Pending | calcMA + calcRSI pure functions |
-| volumeHistory in useMarketData | ⏳ Pending | Simulated volume from change_percent |
-| PriceChart MA overlays | ⏳ Pending | MA20 (yellow) + MA50 (purple) toggleable |
-| PriceChart volume histogram | ⏳ Pending | Bottom 20% of chart pane |
-| RSI sub-panel | ⏳ Pending | Separate chart div, 70/50/30 reference lines |
+(none — phase complete)
 
 ## Previous Phase
 
-**Phase 8: Trade History & Portfolio Analytics** — ✅ Completed (2026-05-28)
+**Phase 9: Chart Indicators** — ✅ Completed (2026-05-28)
 
 Goal: PriceChart gains toggleable MA20/MA50 overlays, volume histogram, and RSI(14) sub-panel.
 
@@ -41,6 +35,8 @@ Goal: PriceChart gains toggleable MA20/MA50 overlays, volume histogram, and RSI(
 | Phase 6: Testing | 2026-05 | 128 backend unit tests + 8 E2E Playwright tests |
 | Phase 7: Bug Fixes & Polish | 2026-05 | TradeBar layout fix, chat trade sequencing fix, production UI v2, responsive layout |
 | Phase 8: Trade History & Analytics | 2026-05-28 | Trade log tab, analytics cards, realized/unrealized P&L, CSV export |
+| Phase 9: Chart Indicators | 2026-05-28 | MA20/MA50 overlays, volume histogram, RSI sub-panel, indicators.ts library |
+| Phase 10: AI Intelligence Upgrade | 2026-05-28 | Proactive alerts, enriched context, polling endpoint, market-summary, slash commands, MarketSummaryBanner |
 
 ## Key Files
 

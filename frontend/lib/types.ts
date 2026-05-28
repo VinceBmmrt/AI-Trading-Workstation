@@ -54,6 +54,8 @@ export interface ChatActions {
   trades: TradeResult["trade"][];
   trade_errors: string[];
   watchlist_changes: { ticker: string; action: string }[];
+  proactive?: boolean;
+  ticker?: string;
 }
 
 export interface ChatMessage {
@@ -61,6 +63,12 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   actions?: ChatActions;
+  created_at?: string;
+}
+
+export interface MarketSummary {
+  summary: string;
+  generated_at: string;
 }
 
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";

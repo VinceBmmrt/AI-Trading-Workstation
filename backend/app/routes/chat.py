@@ -22,8 +22,10 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 USER_ID = "default"
 MODEL = "openrouter/openai/gpt-oss-120b"
 EXTRA_BODY = {"provider": {"order": ["cerebras"]}}
+STARTING_CAPITAL = 10000.0
 
 MOCK_RESPONSE = "Mock mode: your portfolio is ready. Ask me to buy, sell, or analyze your holdings."
+MOCK_SUMMARY = "Markets are active with simulated prices; your portfolio is performing normally."
 
 
 class ChatRequest(BaseModel):
@@ -47,7 +49,7 @@ class LLMResponse(BaseModel):
     watchlist_changes: list[WatchlistChange] = []
 
 
-def _portfolio_context(price_cache) -> str:
+def _portfolio_context(price_cache, session_baselines: dict[str, float] | None = None) -> str:
     with get_db() as conn:
         profile = conn.execute(
             "SELECT cash_balance FROM users_profile WHERE id=?", (USER_ID,)
@@ -61,21 +63,61 @@ def _portfolio_context(price_cache) -> str:
 
     cash = profile["cash_balance"]
     holdings = 0.0
-    pos_lines = []
+    pos_data = []
     for row in positions:
         ticker, qty, avg = row["ticker"], row["quantity"], row["avg_cost"]
         price = price_cache.get_price(ticker) or avg
         value = round(qty * price, 2)
-        pnl = round(value - qty * avg, 2)
         holdings += value
-        sign = "+" if pnl >= 0 else ""
-        pos_lines.append(f"  {ticker}: {qty} shares @ avg ${avg:.2f}, now ${price:.2f} ({sign}${pnl:.2f})")
+        pos_data.append((ticker, qty, avg, price, value))
 
-    wl = ", ".join(r["ticker"] for r in watchlist)
+    total = cash + holdings
+    delta = total - STARTING_CAPITAL
+    delta_pct = delta / STARTING_CAPITAL * 100
+    delta_sign = "+" if delta >= 0 else ""
+
+    pos_lines = []
+    for ticker, qty, avg, price, value in pos_data:
+        pnl = round(value - qty * avg, 2)
+        pnl_sign = "+" if pnl >= 0 else ""
+        pnl_pct = (price - avg) / avg * 100 if avg != 0 else 0.0
+        weight = value / total * 100 if total != 0 else 0.0
+        concentration = " ⚠ concentrated" if weight > 25 else ""
+        pos_lines.append(
+            f"  {ticker}: {qty} shares @ avg ${avg:.2f} -> now ${price:.2f} | "
+            f"P&L: {pnl_sign}${pnl:.2f} ({pnl_pct:+.2f}%) | weight: {weight:.1f}%{concentration}"
+        )
+
+    wl_tickers = [r["ticker"] for r in watchlist]
+    wl = ", ".join(wl_tickers)
+
+    header = (
+        f"Cash: ${cash:.2f} | Holdings: ${holdings:.2f} | Total: ${total:.2f} "
+        f"(start: ${STARTING_CAPITAL:.2f}, change: {delta_sign}${delta:.2f} / {delta_pct:+.1f}%)"
+    )
+
+    movers_block = ""
+    if session_baselines:
+        movers = []
+        for t in wl_tickers:
+            baseline = session_baselines.get(t, 0.0)
+            if baseline == 0.0:
+                continue
+            current = price_cache.get_price(t)
+            if current is None:
+                continue
+            movers.append((t, (current - baseline) / baseline * 100))
+        movers.sort(key=lambda x: abs(x[1]), reverse=True)
+        top3 = movers[:3]
+        if top3:
+            movers_block = "\nSession movers (top 3): " + " | ".join(
+                f"{t}: {pct:+.1f}% session" for t, pct in top3
+            )
+
     return (
-        f"Cash: ${cash:.2f} | Holdings: ${holdings:.2f} | "
-        f"Total: ${cash + holdings:.2f}\n"
-        f"Positions:\n{chr(10).join(pos_lines) or '  (none)'}\n"
+        f"{header}\n"
+        f"Positions:\n{chr(10).join(pos_lines) or '  (none)'}"
+        f"{movers_block}\n"
         f"Watchlist: {wl}"
     )
 
@@ -113,7 +155,7 @@ async def chat(body: ChatRequest, request: Request):
     if os.environ.get("LLM_MOCK", "").lower() == "true":
         llm_response = LLMResponse(message=MOCK_RESPONSE)
     else:
-        context = _portfolio_context(price_cache)
+        context = _portfolio_context(price_cache, getattr(request.app.state, "session_baselines", None))
         system_prompt = (
             "You are Finance Ally, an AI trading assistant for a simulated portfolio platform.\n"
             "Analyze positions, suggest and execute trades, manage the watchlist.\n"
@@ -191,3 +233,63 @@ async def chat(body: ChatRequest, request: Request):
     _save_message("assistant", llm_response.message, actions)
 
     return {"message": llm_response.message, "actions": actions}
+
+
+@router.get("/messages")
+async def get_messages(after_ts: str | None = None):
+    with get_db() as conn:
+        if after_ts is not None:
+            rows = conn.execute(
+                "SELECT id, role, content, actions, created_at FROM chat_messages "
+                "WHERE user_id=? AND created_at > ? ORDER BY created_at ASC",
+                (USER_ID, after_ts),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT id, role, content, actions, created_at FROM chat_messages "
+                "WHERE user_id=? ORDER BY created_at DESC LIMIT 20",
+                (USER_ID,),
+            ).fetchall()
+            rows = list(reversed(rows))
+    return [
+        {
+            "id": r["id"],
+            "role": r["role"],
+            "content": r["content"],
+            "actions": json.loads(r["actions"]) if r["actions"] else None,
+            "created_at": r["created_at"],
+        }
+        for r in rows
+    ]
+
+
+@router.get("/market-summary")
+async def market_summary(request: Request):
+    generated_at = datetime.now(timezone.utc).isoformat()
+    try:
+        price_cache = request.app.state.price_cache
+        baselines = getattr(request.app.state, "session_baselines", None)
+        if os.environ.get("LLM_MOCK", "").lower() == "true":
+            return {"summary": MOCK_SUMMARY, "generated_at": generated_at}
+        context = _portfolio_context(price_cache, baselines)
+        messages = [
+            {
+                "role": "system",
+                "content": "You are Finance Ally. Respond with a single-sentence market summary, max 30 words. Plain text only.",
+            },
+            {
+                "role": "user",
+                "content": f"{context}\nGive me a one-sentence market summary.",
+            },
+        ]
+        resp = await acompletion(
+            model=MODEL,
+            messages=messages,
+            reasoning_effort="low",
+            extra_body=EXTRA_BODY,
+        )
+        summary = resp.choices[0].message.content.strip()
+    except Exception:
+        logger.exception("market-summary endpoint failed")
+        return {"summary": "Market data loading...", "generated_at": generated_at}
+    return {"summary": summary, "generated_at": generated_at}

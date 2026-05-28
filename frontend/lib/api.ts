@@ -1,4 +1,4 @@
-import type { Portfolio, HistoryPoint, WatchlistItem, TradeResult, TradeRecord, PortfolioAnalytics } from "./types";
+import type { Portfolio, HistoryPoint, WatchlistItem, TradeResult, TradeRecord, PortfolioAnalytics, MarketSummary, ChatMessage } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";  // empty = same-origin in production
 
@@ -61,6 +61,21 @@ export async function fetchTrades(): Promise<TradeRecord[]> {
 export async function fetchAnalytics(): Promise<PortfolioAnalytics> {
   const r = await fetch(`${BASE}/api/portfolio/analytics`);
   if (!r.ok) throw new Error("Failed to fetch analytics");
+  return r.json();
+}
+
+export async function fetchMarketSummary(): Promise<MarketSummary> {
+  const r = await fetch(`${BASE}/api/chat/market-summary`);
+  if (!r.ok) throw new Error("Failed to fetch market summary");
+  return r.json();
+}
+
+export async function fetchChatMessages(afterTs?: string): Promise<ChatMessage[]> {
+  const url = afterTs
+    ? `${BASE}/api/chat/messages?after_ts=${encodeURIComponent(afterTs)}`
+    : `${BASE}/api/chat/messages`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("Failed to fetch chat messages");
   return r.json();
 }
 
