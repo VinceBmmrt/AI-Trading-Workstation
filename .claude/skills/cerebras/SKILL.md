@@ -22,15 +22,22 @@ Use code like these examples in order to use Cerebras.
 ### Imports and constants
 
 ```python
-from litellm import completion
+from litellm import completion, acompletion  # acompletion for use inside async functions
 MODEL = "openrouter/openai/gpt-oss-120b"
 EXTRA_BODY = {"provider": {"order": ["cerebras"]}}
 ```
 
-### Code to call via Cerebras for a text response
+### Code to call via Cerebras for a text response (sync)
 
 ```python
 response = completion(model=MODEL, messages=messages, reasoning_effort="low", extra_body=EXTRA_BODY)
+result = response.choices[0].message.content
+```
+
+### Code to call via Cerebras for a text response (async — use inside `async def`)
+
+```python
+response = await acompletion(model=MODEL, messages=messages, reasoning_effort="low", extra_body=EXTRA_BODY)
 result = response.choices[0].message.content
 ```
 

@@ -5,11 +5,11 @@
 See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A user opens a browser, sees live streaming prices, buys and sells with one click, and converses with an AI that acts on their behalf — all in a single Docker container, zero setup.
-**Current focus:** Phase 9 — Technical Indicators & Chart Upgrades (planned, ready to execute)
+**Current focus:** Phase 10 — AI Intelligence Upgrade (planned, ready to execute)
 
 ## Current Phase
 
-**Phase 9: Technical Indicators & Chart Upgrades** — 🗓 Planned (plans written 2026-05-28, ready to execute)
+**Phase 10: AI Intelligence Upgrade** — 🗓 Planned (plans written 2026-05-28, ready to execute)
 
 Goal: PriceChart gains toggleable MA20/MA50 overlays, volume histogram, and RSI(14) sub-panel.
 
