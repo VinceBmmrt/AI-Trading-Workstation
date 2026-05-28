@@ -355,7 +355,7 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
   return (
     <div className="flex flex-col h-full">
       {/* Chart header */}
-      <div className="flex items-center gap-0 px-4 py-2 border-b border-border shrink-0 bg-surface">
+      <div className="flex items-center gap-0 px-4 py-2 border-b border-border shrink-0 bg-surface overflow-x-auto">
         {/* Ticker + price */}
         <div className="flex items-baseline gap-3 flex-1 min-w-0">
           <span className="font-mono font-bold text-accent text-[13px] tracking-[0.12em] uppercase shrink-0">

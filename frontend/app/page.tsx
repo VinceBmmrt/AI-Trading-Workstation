@@ -37,9 +37,13 @@ export default function TradingPage() {
   const [selectedTicker, setSelectedTicker] = useState("AAPL");
   const [chatOpen, setChatOpen] = useState(true);
 
-  // Collapse chat panel on narrow screens on first mount
+  // Collapse chat panel when viewport is too narrow (only closes, never force-opens)
   useEffect(() => {
-    if (window.innerWidth < 1024) setChatOpen(false);
+    const BREAKPOINT = 1100;
+    function check() { if (window.innerWidth < BREAKPOINT) setChatOpen(false); }
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
   const [portfolioTab, setPortfolioTab] = useState<PortfolioTab>("positions");
 
