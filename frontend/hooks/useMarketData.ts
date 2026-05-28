@@ -9,6 +9,7 @@ const RECONNECT_DELAY = 2000;
 export interface MarketDataState {
   prices: Map<string, PriceUpdate>;
   history: Map<string, number[]>;
+  volumeHistory: Map<string, number[]>;
   flashing: Map<string, "up" | "down">;
   status: ConnectionStatus;
 }
@@ -17,6 +18,7 @@ export function useMarketData() {
   const [state, setState] = useState<MarketDataState>({
     prices: new Map(),
     history: new Map(),
+    volumeHistory: new Map(),
     flashing: new Map(),
     status: "disconnected",
   });
@@ -50,6 +52,7 @@ export function useMarketData() {
       setState((prev) => {
         const prices = new Map(prev.prices);
         const history = new Map(prev.history);
+        const volumeHistory = new Map(prev.volumeHistory);
         const flashing = new Map(prev.flashing);
 
         for (const [ticker, update] of Object.entries(data)) {
@@ -60,6 +63,12 @@ export function useMarketData() {
           const hist = history.get(ticker) ?? [];
           const next = [...hist, update.price];
           history.set(ticker, next.length > HISTORY_LENGTH ? next.slice(-HISTORY_LENGTH) : next);
+
+          // Simulated volume from price move magnitude
+          const vol = Math.round(Math.abs(update.change_percent) * 500_000 * (0.6 + Math.random() * 0.8));
+          const vols = volumeHistory.get(ticker) ?? [];
+          const nextVols = [...vols, vol];
+          volumeHistory.set(ticker, nextVols.length > HISTORY_LENGTH ? nextVols.slice(-HISTORY_LENGTH) : nextVols);
 
           // Flash on actual price change
           if (!prev_update || prev_update.price !== update.price) {
@@ -79,7 +88,7 @@ export function useMarketData() {
           }
         }
 
-        return { ...prev, prices, history, flashing };
+        return { ...prev, prices, history, volumeHistory, flashing };
       });
     };
 

@@ -95,6 +95,7 @@ export default function TradingPage() {
               ticker={selectedTicker}
               prices={market.prices}
               history={market.history}
+              volumeHistory={market.volumeHistory}
             />
           </div>
 
