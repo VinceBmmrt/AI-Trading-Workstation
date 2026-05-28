@@ -10,23 +10,27 @@ import PnLChart from "@/components/PnLChart";
 import TradeBar from "@/components/TradeBar";
 import ChatPanel from "@/components/ChatPanel";
 import StatusBar from "@/components/StatusBar";
+import TradeHistory from "@/components/TradeHistory";
+import PortfolioAnalyticsPanel from "@/components/PortfolioAnalyticsPanel";
 import { useMarketData } from "@/hooks/useMarketData";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { fetchWatchlist } from "@/lib/api";
 
 const DEFAULT_TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "NFLX"];
 
-type PortfolioTab = "positions" | "heatmap" | "pnl";
+type PortfolioTab = "positions" | "heatmap" | "pnl" | "history" | "analytics";
 
 const TAB_LABELS: Record<PortfolioTab, string> = {
   positions: "Positions",
   heatmap: "Heatmap",
   pnl: "P&L",
+  history: "History",
+  analytics: "Analytics",
 };
 
 export default function TradingPage() {
   const market = useMarketData();
-  const { portfolio, history, refresh: refreshPortfolio } = usePortfolio();
+  const { portfolio, history, trades, analytics, refresh: refreshPortfolio } = usePortfolio();
 
   const [tickers, setTickers] = useState<string[]>(DEFAULT_TICKERS);
   const [selectedTicker, setSelectedTicker] = useState("AAPL");
@@ -98,7 +102,7 @@ export default function TradingPage() {
           <div className="flex-[2] min-h-0 flex flex-col overflow-hidden">
             {/* Tab bar */}
             <div className="flex items-center border-b border-border shrink-0 px-1 bg-surface">
-              {(["positions", "heatmap", "pnl"] as PortfolioTab[]).map((tab) => (
+              {(["positions", "heatmap", "pnl", "history", "analytics"] as PortfolioTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setPortfolioTab(tab)}
@@ -121,9 +125,11 @@ export default function TradingPage() {
             </div>
 
             <div className="flex-1 min-h-0 overflow-auto">
-              {portfolioTab === "positions" && <PositionsTable portfolio={portfolio} />}
-              {portfolioTab === "heatmap"   && <PortfolioHeatmap portfolio={portfolio} />}
-              {portfolioTab === "pnl"       && <PnLChart history={history} />}
+              {portfolioTab === "positions"  && <PositionsTable portfolio={portfolio} />}
+              {portfolioTab === "heatmap"    && <PortfolioHeatmap portfolio={portfolio} />}
+              {portfolioTab === "pnl"        && <PnLChart history={history} />}
+              {portfolioTab === "history"    && <TradeHistory trades={trades} />}
+              {portfolioTab === "analytics"  && <PortfolioAnalyticsPanel analytics={analytics} />}
             </div>
           </div>
         </main>
