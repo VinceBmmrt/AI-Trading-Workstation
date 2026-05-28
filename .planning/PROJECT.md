@@ -32,13 +32,27 @@ A user opens a browser, sees live streaming prices, buys and sells with one clic
 - ✓ Start/stop scripts for Windows (PowerShell) and macOS (bash) — Phase 5
 - ✓ 128 backend unit tests (market data, portfolio, LLM, routes) — Phase 6
 - ✓ 8 E2E Playwright tests covering key user flows — Phase 6
+- ✓ TradeBar layout fix — buttons no longer overflow watchlist column — Phase 7
+- ✓ Chat trade sequencing fix — new watchlist tickers get prices before trades execute — Phase 7
+- ✓ Mobile-responsive layout — bottom tab nav for <768px, 3-column desktop at ≥768px — Phase 7
+- ✓ Trade log tab — full history table (date, ticker, side, qty, price, P&L at close) — Phase 8
+- ✓ Portfolio analytics cards — total return %, best/worst performer, win rate — Phase 8
+- ✓ Realized vs unrealized P&L breakdown — Phase 8
+- ✓ CSV export of trade history — Phase 8
+- ✓ MA20/MA50 overlay lines on price chart, toggleable — Phase 9
+- ✓ RSI(14) sub-panel with 70/30 reference lines — Phase 9
+- ✓ Volume histogram at bottom of price chart — Phase 9
+- ✓ All indicators update in real time from SSE — Phase 9
+- ✓ Proactive AI commentary on >2% price moves in chat — Phase 10
+- ✓ Market summary banner on page load (AI-generated from live prices) — Phase 10
+- ✓ Enriched LLM system prompt — risk concentration, largest mover, unrealized P&L by position — Phase 10
+- ✓ Slash command shortcuts in chat: /analyze, /rebalance, /risk — Phase 10
+- ✓ GET /api/chat/messages — conversation history polling endpoint — Phase 10
+- ✓ GET /api/chat/market-summary — market summary generation endpoint — Phase 10
 
 ### Active
 
-- [ ] Bug-fix: TradeBar BUY/SELL buttons overflow watchlist column (fix implemented, not committed)
-- [ ] Bug-fix: AI chat fails when LLM suggests trading a ticker not yet in price cache (fix implemented, not committed)
-- [ ] Verify all PLAN.md features work end-to-end in Docker (manual smoke test)
-- [ ] Any remaining UI/UX polish items discovered during smoke test
+(none — phases 1–10 complete, planning Phase 11)
 
 ### Out of Scope
 
@@ -56,7 +70,7 @@ A user opens a browser, sees live streaming prices, buys and sells with one clic
 - **Market data**: GBM simulator default; Massive (Polygon.io) REST API optional via `MASSIVE_API_KEY` env var
 - **Database**: Initialized on startup via lifespan event — no migrations, no manual setup; default user seeded with $10k cash and 10-ticker watchlist
 - **Course context**: This is a capstone project demonstrating AI agents building a full-stack production app; code quality and patterns matter for student learning
-- **Current branch**: `feat/backend-api` — two unfixed bugs (TradeBar overflow, chat trade errors) are locally patched but not yet committed
+- **Current branch**: `feat/backend-api` — phases 1–10 complete and committed; Phase 11 (Price Alerts) up next
 
 ## Constraints
 
@@ -77,7 +91,7 @@ A user opens a browser, sees live streaming prices, buys and sells with one clic
 | Market orders only | Eliminates order book, partial fills, complex portfolio math | ✓ Good |
 | DB init on startup via lifespan | No race conditions, no separate migration step | ✓ Good |
 | LLM auto-executes trades without confirmation | Fake money, impressive demo, demonstrates agentic capability | ✓ Good |
-| Watchlist changes run before trades in chat | New tickers need time to get prices before trades can execute | — Pending validation |
+| Watchlist changes run before trades in chat | New tickers need time to get prices before trades can execute | ✓ Validated (Phase 7 fix) |
 
 ## Evolution
 
@@ -97,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-26 after initialization*
+*Last updated: 2026-05-28*

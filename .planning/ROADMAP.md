@@ -1,6 +1,6 @@
 # Roadmap: AI Trading Workstation — Finance Ally
 
-**Generated:** 2026-05-26 | **Updated:** 2026-05-27
+**Generated:** 2026-05-26 | **Updated:** 2026-05-28
 **Total Phases:** 12 | **Total Requirements:** 47 | **Coverage:** 100% ✓
 
 ---
@@ -16,9 +16,9 @@
 | 5 | Docker & Deployment | ✅ Complete | DEPLOY-01–05 | 3 |
 | 6 | Testing | ✅ Complete | TEST-01–05 | 3 |
 | 7 | Bug Fixes & Polish | ✅ Complete | BUG-01, BUG-02 | 4 |
-| 8 | Trade History & Portfolio Analytics | 📋 Planned | — | 4 |
-| 9 | Technical Indicators & Chart Upgrades | 📋 Planned | — | 4 |
-| 10 | AI Intelligence Upgrade | 📋 Planned | — | 4 |
+| 8 | Trade History & Portfolio Analytics | ✅ Complete | — | 4 |
+| 9 | Technical Indicators & Chart Upgrades | ✅ Complete | — | 4 |
+| 10 | AI Intelligence Upgrade | ✅ Complete | — | 4 |
 | 11 | Price Alerts & Notifications | 📋 Planned | — | 3 |
 | 12 | Settings & User Control | 📋 Planned | — | 3 |
 
@@ -142,7 +142,7 @@
 
 **Goal:** The Positions panel becomes a full analytics dashboard. Users can see every trade they ever executed, measure actual performance, and export data.
 
-**Status:** 📋 Planned
+**Status:** ✅ Complete (2026-05-28)
 
 **Depends on:** Phase 7
 
@@ -164,7 +164,7 @@
 
 **Goal:** The price chart gains toggleable technical overlays, making it look and feel like a professional charting terminal.
 
-**Status:** 📋 Planned
+**Status:** ✅ Complete (2026-05-28)
 
 **Depends on:** Phase 8
 
@@ -186,7 +186,7 @@
 
 **Goal:** The AI assistant becomes proactive and context-aware — it notices market moves, surfaces insights unprompted, and has a richer understanding of the user's portfolio risk.
 
-**Status:** 📋 Planned
+**Status:** ✅ Complete (2026-05-28)
 
 **Depends on:** Phase 9
 
@@ -302,8 +302,8 @@
 | TEST-03 | Phase 6 | ✅ Complete |
 | TEST-04 | Phase 6 | ✅ Complete |
 | TEST-05 | Phase 6 | ✅ Complete |
-| BUG-01 | Phase 7 | 🔄 In Progress |
-| BUG-02 | Phase 7 | 🔄 In Progress |
+| BUG-01 | Phase 7 | ✅ Complete |
+| BUG-02 | Phase 7 | ✅ Complete |
 
 **Coverage:**
 - v1 requirements: 47 total (45 requirements + 2 bug fixes)
