@@ -13,11 +13,13 @@ import StatusBar from "@/components/StatusBar";
 import TradeHistory from "@/components/TradeHistory";
 import PortfolioAnalyticsPanel from "@/components/PortfolioAnalyticsPanel";
 import MarketSummaryBanner from "@/components/MarketSummaryBanner";
+import SettingsPanel from "@/components/SettingsPanel";
 import { useMarketData } from "@/hooks/useMarketData";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { useAlerts } from "@/hooks/useAlerts";
+import { useTheme } from "@/hooks/useTheme";
 import ToastContainer from "@/components/ToastContainer";
-import { fetchWatchlist } from "@/lib/api";
+import { fetchWatchlist, fetchSettings } from "@/lib/api";
 
 const DEFAULT_TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "NFLX"];
 
@@ -44,10 +46,25 @@ export default function TradingPage() {
   const { portfolio, history, trades, analytics, refresh: refreshPortfolio } = usePortfolio();
 
   const [tickers, setTickers] = useState<string[]>(DEFAULT_TICKERS);
-  const [selectedTicker, setSelectedTicker] = useState("AAPL");
-  const [chatOpen, setChatOpen] = useState(true);
-  const [portfolioTab, setPortfolioTab] = useState<PortfolioTab>("positions");
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("chart");
+  const [selectedTicker, setSelectedTicker] = useState(() => {
+    if (typeof window === "undefined") return "AAPL";
+    return localStorage.getItem("fa_selected_ticker") ?? "AAPL";
+  });
+  const [chatOpen, setChatOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("fa_chat_open") !== "false";
+  });
+  const [portfolioTab, setPortfolioTab] = useState<PortfolioTab>(() => {
+    if (typeof window === "undefined") return "positions";
+    return (localStorage.getItem("fa_portfolio_tab") as PortfolioTab) ?? "positions";
+  });
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>(() => {
+    if (typeof window === "undefined") return "chart";
+    return (localStorage.getItem("fa_mobile_panel") as MobilePanel) ?? "chart";
+  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [startingCapital, setStartingCapital] = useState(10000);
+  const { theme } = useTheme();
 
   // Desktop: collapse chat when viewport is too narrow (only closes, never force-opens)
   useEffect(() => {
@@ -62,6 +79,15 @@ export default function TradingPage() {
     fetchWatchlist()
       .then((items) => { if (items.length > 0) setTickers(items.map((i) => i.ticker)); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => { localStorage.setItem("fa_selected_ticker", selectedTicker); }, [selectedTicker]);
+  useEffect(() => { localStorage.setItem("fa_chat_open", String(chatOpen)); }, [chatOpen]);
+  useEffect(() => { localStorage.setItem("fa_portfolio_tab", portfolioTab); }, [portfolioTab]);
+  useEffect(() => { localStorage.setItem("fa_mobile_panel", mobilePanel); }, [mobilePanel]);
+
+  useEffect(() => {
+    fetchSettings().then(s => setStartingCapital(s.starting_capital)).catch(() => {});
   }, []);
 
   function refreshWatchlist() {
@@ -153,7 +179,12 @@ export default function TradingPage() {
 
   return (
     <div className="flex flex-col h-full bg-bg">
-      <Header portfolio={portfolio} status={market.status} />
+      <Header
+        portfolio={portfolio}
+        status={market.status}
+        startingCapital={startingCapital}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
       <MarketSummaryBanner />
 
       {/* ── MOBILE layout (<md = 768px) ── */}
@@ -244,6 +275,15 @@ export default function TradingPage() {
       {/* Bottom status bar */}
       <StatusBar status={market.status} priceCount={priceCount} />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      {settingsOpen && (
+        <SettingsPanel
+          onClose={() => setSettingsOpen(false)}
+          onResetComplete={() => {
+            refreshPortfolio();
+            fetchSettings().then(s => setStartingCapital(s.starting_capital)).catch(() => {});
+          }}
+        />
+      )}
     </div>
   );
 }

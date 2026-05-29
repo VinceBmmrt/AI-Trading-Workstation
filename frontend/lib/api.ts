@@ -1,4 +1,4 @@
-import type { Portfolio, HistoryPoint, WatchlistItem, TradeResult, TradeRecord, PortfolioAnalytics, MarketSummary, ChatMessage, Alert } from "./types";
+import type { Portfolio, HistoryPoint, WatchlistItem, TradeResult, TradeRecord, PortfolioAnalytics, MarketSummary, ChatMessage, Alert, AppSettings } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";  // empty = same-origin in production
 
@@ -117,4 +117,29 @@ export async function createAlert(
 export async function deleteAlert(alertId: number): Promise<void> {
   const r = await fetch(`${BASE}/api/alerts/${alertId}`, { method: "DELETE" });
   if (!r.ok) throw new Error("Failed to delete alert");
+}
+
+export async function fetchSettings(): Promise<AppSettings> {
+  const r = await fetch(`${BASE}/api/settings`);
+  if (!r.ok) throw new Error("Failed to fetch settings");
+  return r.json();
+}
+
+export async function updateSettings(startingCapital: number): Promise<AppSettings> {
+  const r = await fetch(`${BASE}/api/settings`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ starting_capital: startingCapital }),
+  });
+  if (!r.ok) {
+    const data = await r.json().catch(() => ({}));
+    throw new Error((data as { detail?: string }).detail ?? "Failed to update settings");
+  }
+  return r.json();
+}
+
+export async function resetPortfolio(): Promise<{ success: boolean; cash_balance: number }> {
+  const r = await fetch(`${BASE}/api/portfolio/reset`, { method: "POST" });
+  if (!r.ok) throw new Error("Reset failed");
+  return r.json();
 }

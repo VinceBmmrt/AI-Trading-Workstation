@@ -6,6 +6,8 @@ import type { ConnectionStatus, Portfolio } from "@/lib/types";
 interface Props {
   portfolio: Portfolio | null;
   status: ConnectionStatus;
+  startingCapital: number;
+  onOpenSettings: () => void;
 }
 
 const STATUS_DOT: Record<ConnectionStatus, string> = {
@@ -26,13 +28,11 @@ const STATUS_TEXT: Record<ConnectionStatus, string> = {
   disconnected: "text-down",
 };
 
-const STARTING_CAPITAL = 10_000;
-
 function fmt(n: number) {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export default function Header({ portfolio, status }: Props) {
+export default function Header({ portfolio, status, startingCapital, onOpenSettings }: Props) {
   const [time, setTime] = useState<string>("");
 
   useEffect(() => {
@@ -53,8 +53,8 @@ export default function Header({ portfolio, status }: Props) {
   const totalValue  = portfolio?.total_value   ?? 0;
   const cash        = portfolio?.cash_balance  ?? 0;
   const holdings    = portfolio?.holdings_value ?? 0;
-  const netPnL      = portfolio ? totalValue - STARTING_CAPITAL : null;
-  const netPnLPct   = netPnL !== null ? (netPnL / STARTING_CAPITAL) * 100 : null;
+  const netPnL      = portfolio ? totalValue - startingCapital : null;
+  const netPnLPct   = netPnL !== null ? (netPnL / startingCapital) * 100 : null;
   const isProfit    = netPnL !== null && netPnL >= 0;
   const posCount    = portfolio?.positions.length ?? 0;
 
@@ -142,6 +142,13 @@ export default function Header({ portfolio, status }: Props) {
 
       {/* RIGHT — clock + status */}
       <div className="flex items-center gap-4 shrink-0">
+        <button
+          onClick={onOpenSettings}
+          className="text-text-dim/50 hover:text-text transition-colors text-sm font-mono"
+          title="Settings"
+        >
+          ⚙
+        </button>
         {time && (
           <span className="font-mono text-[11px] text-text-dim tabular-nums tracking-wider hidden lg:block">
             {time}

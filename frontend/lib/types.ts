@@ -115,3 +115,7 @@ export interface FiredAlert {
   current_price: number;
   triggered_at: string;
 }
+
+export interface AppSettings {
+  starting_capital: number;
+}

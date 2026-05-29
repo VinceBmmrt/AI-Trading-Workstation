@@ -35,6 +35,22 @@ body {
   color: #e6edf3;
 }
 
+html.light {
+  --color-bg: #f6f8fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f0f2f5;
+  --color-surface-3: #e8eaed;
+  --color-border: #d0d7de;
+  --color-border-subtle: #e4e8ec;
+  --color-muted: #57606a;
+  --color-text: #1f2328;
+  --color-text-dim: #57606a;
+  --color-up-dim: #d4edda;
+  --color-down-dim: #fde8e8;
+}
+
+html.light body { background: #f6f8fa; color: #1f2328; }
+
 /* Price flash animations */
 @keyframes flash-up {
   0%   { background-color: rgba(63, 185, 80, 0.30); }
