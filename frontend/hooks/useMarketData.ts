@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import type { PriceUpdate, ConnectionStatus } from "@/lib/types";
+import type { PriceUpdate, ConnectionStatus, FiredAlert } from "@/lib/types";
 
 const HISTORY_LENGTH = 100;
 const RECONNECT_DELAY = 2000;
@@ -14,7 +14,7 @@ export interface MarketDataState {
   status: ConnectionStatus;
 }
 
-export function useMarketData() {
+export function useMarketData(options?: { onAlertFired?: (alert: FiredAlert) => void }) {
   const [state, setState] = useState<MarketDataState>({
     prices: new Map(),
     history: new Map(),
@@ -26,6 +26,10 @@ export function useMarketData() {
   const esRef = useRef<EventSource | null>(null);
   const flashTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onAlertFiredRef = useRef(options?.onAlertFired);
+  useEffect(() => {
+    onAlertFiredRef.current = options?.onAlertFired;
+  }, [options?.onAlertFired]);
 
   const clearFlash = useCallback((ticker: string) => {
     setState((prev) => {
@@ -91,6 +95,15 @@ export function useMarketData() {
         return { ...prev, prices, history, volumeHistory, flashing };
       });
     };
+
+    es.addEventListener("alert_fired", (event: MessageEvent) => {
+      try {
+        const fired: FiredAlert = JSON.parse(event.data);
+        onAlertFiredRef.current?.(fired);
+      } catch {
+        // ignore parse errors
+      }
+    });
 
     es.onerror = () => {
       es.close();

@@ -15,6 +15,8 @@ import PortfolioAnalyticsPanel from "@/components/PortfolioAnalyticsPanel";
 import MarketSummaryBanner from "@/components/MarketSummaryBanner";
 import { useMarketData } from "@/hooks/useMarketData";
 import { usePortfolio } from "@/hooks/usePortfolio";
+import { useAlerts } from "@/hooks/useAlerts";
+import ToastContainer from "@/components/ToastContainer";
 import { fetchWatchlist } from "@/lib/api";
 
 const DEFAULT_TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "NFLX"];
@@ -37,7 +39,8 @@ const MOBILE_TABS: { id: MobilePanel; label: string; icon: string }[] = [
 ];
 
 export default function TradingPage() {
-  const market = useMarketData();
+  const { alerts, toasts, handleAlertFired, dismissToast, createAlert } = useAlerts();
+  const market = useMarketData({ onAlertFired: handleAlertFired });
   const { portfolio, history, trades, analytics, refresh: refreshPortfolio } = usePortfolio();
 
   const [tickers, setTickers] = useState<string[]>(DEFAULT_TICKERS);
@@ -91,6 +94,8 @@ export default function TradingPage() {
           selectedTicker={selectedTicker}
           onSelectTicker={(t) => { setSelectedTicker(t); setMobilePanel("chart"); }}
           onWatchlistChange={refreshWatchlist}
+          alerts={alerts}
+          onCreateAlert={createAlert}
         />
       </div>
       <TradeBar
@@ -238,6 +243,7 @@ export default function TradingPage() {
 
       {/* Bottom status bar */}
       <StatusBar status={market.status} priceCount={priceCount} />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

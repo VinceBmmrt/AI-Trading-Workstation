@@ -1,4 +1,4 @@
-import type { Portfolio, HistoryPoint, WatchlistItem, TradeResult, TradeRecord, PortfolioAnalytics, MarketSummary, ChatMessage } from "./types";
+import type { Portfolio, HistoryPoint, WatchlistItem, TradeResult, TradeRecord, PortfolioAnalytics, MarketSummary, ChatMessage, Alert } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";  // empty = same-origin in production
 
@@ -89,4 +89,32 @@ export async function sendChat(
   });
   if (!r.ok) throw new Error("Chat request failed");
   return r.json();
+}
+
+export async function fetchAlerts(): Promise<Alert[]> {
+  const r = await fetch(`${BASE}/api/alerts`);
+  if (!r.ok) throw new Error("Failed to fetch alerts");
+  return r.json();
+}
+
+export async function createAlert(
+  ticker: string,
+  targetPrice: number,
+  direction: "above" | "below"
+): Promise<Alert> {
+  const r = await fetch(`${BASE}/api/alerts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ticker, target_price: targetPrice, direction }),
+  });
+  if (!r.ok) {
+    const data = await r.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to create alert");
+  }
+  return (await r.json()).alert;
+}
+
+export async function deleteAlert(alertId: number): Promise<void> {
+  const r = await fetch(`${BASE}/api/alerts/${alertId}`, { method: "DELETE" });
+  if (!r.ok) throw new Error("Failed to delete alert");
 }

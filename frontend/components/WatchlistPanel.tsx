@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Sparkline from "./Sparkline";
-import type { PriceUpdate } from "@/lib/types";
+import AlertPopover from "./AlertPopover";
+import type { PriceUpdate, Alert } from "@/lib/types";
 import { addToWatchlist, removeFromWatchlist } from "@/lib/api";
 
 interface Props {
@@ -13,15 +14,19 @@ interface Props {
   selectedTicker: string;
   onSelectTicker: (ticker: string) => void;
   onWatchlistChange: () => void;
+  alerts: Alert[];
+  onCreateAlert: (ticker: string, targetPrice: number, direction: "above" | "below") => Promise<void>;
 }
 
 export default function WatchlistPanel({
   tickers, prices, history, flashing,
   selectedTicker, onSelectTicker, onWatchlistChange,
+  alerts, onCreateAlert,
 }: Props) {
   const [addInput, setAddInput] = useState("");
   const [addError, setAddError] = useState("");
   const [addLoading, setAddLoading] = useState(false);
+  const [alertPopoverTicker, setAlertPopoverTicker] = useState<string | null>(null);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +74,8 @@ export default function WatchlistPanel({
           const isUp   = dir === "up";
           const isDown = dir === "down";
 
+          const hasActiveAlert = alerts.some((a) => a.ticker === ticker && a.active);
+
           return (
             <div
               key={ticker}
@@ -109,21 +116,42 @@ export default function WatchlistPanel({
                 }
               </span>
 
-              {/* Sparkline + remove */}
+              {/* Sparkline + actions */}
               <div className="relative flex items-center justify-end">
                 <Sparkline data={hist} width={38} height={20} />
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleRemove(ticker); }}
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-surface-2/90 text-text-dim hover:text-down text-sm transition-opacity rounded-sm"
-                  aria-label={`Remove ${ticker}`}
-                >
-                  ×
-                </button>
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-0.5 bg-surface-2/90 transition-opacity rounded-sm">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setAlertPopoverTicker(ticker); }}
+                    aria-label="Set price alert"
+                    className={`text-[11px] ${hasActiveAlert ? "text-yellow-400" : "text-text-dim/60"}`}
+                  >
+                    🔔
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRemove(ticker); }}
+                    aria-label="Remove ticker"
+                    className="text-sm text-text-dim hover:text-down"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {alertPopoverTicker && (
+        <AlertPopover
+          ticker={alertPopoverTicker}
+          currentPrice={prices.get(alertPopoverTicker)?.price ?? null}
+          onClose={() => setAlertPopoverTicker(null)}
+          onSubmit={async (tp, dir) => {
+            await onCreateAlert(alertPopoverTicker, tp, dir);
+            setAlertPopoverTicker(null);
+          }}
+        />
+      )}
 
       {/* Add ticker */}
       <div className="p-2.5 border-t border-border shrink-0">

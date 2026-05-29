@@ -96,3 +96,22 @@ export interface PortfolioAnalytics {
   buy_count: number;
   sell_count: number;
 }
+
+export interface Alert {
+  id: number;
+  ticker: string;
+  target_price: number;
+  direction: "above" | "below";
+  active: boolean;
+  triggered_at: string | null;
+  created_at: string;
+}
+
+export interface FiredAlert {
+  id: number;
+  ticker: string;
+  target_price: number;
+  direction: "above" | "below";
+  current_price: number;
+  triggered_at: string;
+}
