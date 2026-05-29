@@ -21,7 +21,7 @@ from litellm import acompletion  # noqa: E402
 
 from .db import DEFAULT_TICKERS, get_db, init_db, take_snapshot  # noqa: E402
 from .market import PriceCache, create_market_data_source, create_stream_router  # noqa: E402
-from .routes import alerts, chat, health, portfolio, watchlist  # noqa: E402
+from .routes import alerts, chat, health, portfolio, settings, watchlist  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -246,6 +246,7 @@ app.include_router(health.router)
 app.include_router(create_stream_router(_price_cache, _alert_queue))
 app.include_router(watchlist.router)
 app.include_router(alerts.router)
+app.include_router(settings.router)
 app.include_router(portfolio.router)
 app.include_router(chat.router)
 

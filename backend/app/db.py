@@ -66,6 +66,10 @@ CREATE TABLE IF NOT EXISTS price_alerts (
     triggered_at TEXT,
     created_at   TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS app_settings (
+    id TEXT PRIMARY KEY,
+    starting_capital REAL NOT NULL DEFAULT 10000.0
+);
 """
 
 
@@ -114,6 +118,9 @@ def init_db() -> None:
             "INSERT OR IGNORE INTO watchlist (user_id, ticker, added_at) VALUES ('default', ?, ?)",
             [(t, now) for t in DEFAULT_TICKERS],
         )
+    conn.execute(
+        "INSERT OR IGNORE INTO app_settings (id, starting_capital) VALUES ('default', 10000.0)"
+    )
     conn.commit()
     conn.close()
 

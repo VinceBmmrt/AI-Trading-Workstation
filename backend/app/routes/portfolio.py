@@ -126,13 +126,34 @@ def get_trades():
     ]
 
 
-STARTING_CAPITAL = 10_000.0
+@router.post("/reset")
+def reset_portfolio():
+    try:
+        with get_db() as conn:
+            settings_row = conn.execute(
+                "SELECT starting_capital FROM app_settings WHERE id='default'"
+            ).fetchone()
+            starting = settings_row["starting_capital"] if settings_row else 10000.0
+            conn.execute("DELETE FROM trades WHERE user_id=?", (USER_ID,))
+            conn.execute("DELETE FROM positions WHERE user_id=?", (USER_ID,))
+            conn.execute("DELETE FROM portfolio_snapshots WHERE user_id=?", (USER_ID,))
+            conn.execute(
+                "UPDATE users_profile SET cash_balance=? WHERE id=?",
+                (starting, USER_ID),
+            )
+        return {"success": True, "cash_balance": starting}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reset failed: {e}")
 
 
 @router.get("/analytics")
 def get_analytics(request: Request):
     price_cache = request.app.state.price_cache
     with get_db() as conn:
+        settings_row = conn.execute(
+            "SELECT starting_capital FROM app_settings WHERE id=?", (USER_ID,)
+        ).fetchone()
+        starting_capital = settings_row["starting_capital"] if settings_row else 10000.0
         profile = conn.execute(
             "SELECT cash_balance FROM users_profile WHERE id=?", (USER_ID,)
         ).fetchone()
@@ -149,7 +170,7 @@ def get_analytics(request: Request):
 
     total_invested = sum(r["quantity"] * r["price"] for r in trades if r["side"] == "buy")
     total_received = sum(r["quantity"] * r["price"] for r in trades if r["side"] == "sell")
-    realized_pnl = round(cash - STARTING_CAPITAL - (total_invested - total_received), 2)
+    realized_pnl = round(cash - starting_capital - (total_invested - total_received), 2)
 
     unrealized_pnl = 0.0
     best_ticker, best_pct = None, float("-inf")
@@ -171,7 +192,7 @@ def get_analytics(request: Request):
         (price_cache.get_price(r["ticker"]) or r["avg_cost"]) * r["quantity"]
         for r in positions
     ), 2)
-    total_return_pct = round((total_value - STARTING_CAPITAL) / STARTING_CAPITAL * 100, 2)
+    total_return_pct = round((total_value - starting_capital) / starting_capital * 100, 2)
 
     buy_count = sum(1 for r in trades if r["side"] == "buy")
     sell_count = sum(1 for r in trades if r["side"] == "sell")
