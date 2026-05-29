@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** A user opens a browser, sees live streaming prices, buys and sells with one click, and converses with an AI that acts on their behalf — all in a single Docker container, zero setup.
-**Current focus:** Phase 11 — Price Alerts & Notifications (up next)
+**Current focus:** Phase 11 — Price Alerts & Notifications (planned, ready to execute)
 
 ## Current Phase
 
-**Phase 11: Price Alerts & Notifications** — 📋 Planned
+**Phase 11: Price Alerts & Notifications** — 📋 Planned (2 plans, 2 waves, ready to execute)
 
 Goal: Users and the AI can set price level triggers. When a ticker crosses the threshold, a visible alert fires and the AI references it in chat context.
 
 ### Active Work
 
-(none — planning in progress)
+(none — planning complete, awaiting execution)
 
 ## Previous Phase
 
