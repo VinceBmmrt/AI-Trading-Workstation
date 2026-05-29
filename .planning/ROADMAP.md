@@ -20,7 +20,7 @@
 | 9 | Technical Indicators & Chart Upgrades | ✅ Complete | — | 4 |
 | 10 | AI Intelligence Upgrade | ✅ Complete | — | 4 |
 | 11 | Price Alerts & Notifications | ✅ Complete | — | 3 |
-| 12 | Settings & User Control | 📋 Planned (2 plans) | — | 3 |
+| 12 | Settings & User Control | ✅ Complete | — | 3 |
 
 ---
 
@@ -230,7 +230,7 @@
 
 **Goal:** Users have meaningful control over their environment — they can reset their portfolio, adjust starting capital, and persist their layout preferences.
 
-**Status:** 📋 Planned
+**Status:** ✅ Complete (2026-05-29)
 
 **Depends on:** Phase 11
 
@@ -312,4 +312,4 @@
 
 ---
 *Roadmap created: 2026-05-26*
-*Last updated: 2026-05-26 after initialization*
+*Last updated: 2026-05-29 — Phase 12 complete*

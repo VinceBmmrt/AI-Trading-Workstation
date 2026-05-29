@@ -26,12 +26,17 @@ if ($Build -or $LASTEXITCODE -ne 0) {
     }
 }
 
-# Exit early if the container is already running
+# If container is already running: exit early (no -Build) or stop it (with -Build)
 $running = docker ps -q --filter "name=^${ContainerName}$"
 if ($running) {
-    Write-Host "Container '$ContainerName' is already running."
-    Write-Host "Access the app at: http://localhost:$Port"
-    exit 0
+    if (-not $Build) {
+        Write-Host "Container '$ContainerName' is already running."
+        Write-Host "Access the app at: http://localhost:$Port"
+        exit 0
+    }
+    Write-Host "Stopping existing container to apply new build..."
+    docker stop $ContainerName | Out-Null
+    docker rm $ContainerName | Out-Null
 }
 
 # Remove any stopped container with the same name
