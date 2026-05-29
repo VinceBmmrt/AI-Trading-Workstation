@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 
 export function useTheme() {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") return "dark";
-    return (localStorage.getItem("fa_theme") as "dark" | "light") ?? "dark";
-  });
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  // Restore saved theme after mount (avoids SSR hydration mismatch)
+  useEffect(() => {
+    const saved = localStorage.getItem("fa_theme") as "dark" | "light" | null;
+    if (saved) setTheme(saved);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("light", theme === "light");

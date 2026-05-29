@@ -42,7 +42,6 @@ export default function ChatPanel({ onTradeComplete }: Props) {
       role: "assistant",
       content:
         "Hello! I'm Finance Ally — your AI trading assistant.\n\nAsk me to analyze your portfolio, suggest trades based on your risk profile, or execute orders directly. I can also manage your watchlist.",
-      ts: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }),
     },
   ]);
   const [input, setInput] = useState("");

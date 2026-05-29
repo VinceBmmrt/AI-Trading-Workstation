@@ -6,9 +6,12 @@ A visually rich, AI-powered trading terminal. Stream live market data, trade a s
 
 - **Live price streaming** — prices flash green/red on change via SSE, sparkline charts fill progressively
 - **Simulated trading** — $10,000 in virtual cash, instant market-order fills, no fees
-- **Portfolio dashboard** — treemap heatmap by P&L weight, positions table, P&L chart over time
+- **Portfolio dashboard** — treemap heatmap by P&L weight, positions table, P&L chart, trade history, and analytics
 - **AI chat assistant** — ask about your portfolio, request trades, manage your watchlist in natural language
+- **AI market summary** — LLM-generated session commentary shown in a banner at the top of the page
+- **Price alerts** — set above/below price triggers per ticker; toast notifications fire when crossed
 - **Watchlist management** — add/remove tickers manually or through the AI
+- **Settings panel** — toggle light/dark theme, configure starting capital, reset portfolio (⚙ in the header)
 
 ## Quick Start (Docker)
 
@@ -110,8 +113,12 @@ LLM: LiteLLM → OpenRouter (Cerebras inference)
 | Layer | Technology |
 |---|---|
 | Backend | Python, FastAPI, uv |
-| Frontend | Next.js, TypeScript, Tailwind CSS |
+| Frontend | Next.js (static export), TypeScript, Tailwind CSS |
 | Database | SQLite |
 | Real-time | Server-Sent Events (SSE) |
 | AI | LiteLLM → OpenRouter (Cerebras) |
 | Deployment | Docker (single container) |
+
+### Frontend note
+
+The app uses `next export` (static HTML). All data is live and client-side, so the page renders nothing on the server and mounts fully in the browser — this is intentional and avoids SSR/hydration mismatches with dynamic state.

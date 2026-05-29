@@ -144,12 +144,13 @@ export default function Header({ portfolio, status, startingCapital, onOpenSetti
       <div className="flex items-center gap-4 shrink-0">
         <button
           onClick={onOpenSettings}
-          className="text-text-dim/50 hover:text-text transition-colors text-sm font-mono"
+          className="text-text-dim hover:text-accent transition-colors text-lg leading-none px-1"
           title="Settings"
+          aria-label="Settings"
         >
           ⚙
         </button>
-        {time && (
+        {!!time && (
           <span className="font-mono text-[11px] text-text-dim tabular-nums tracking-wider hidden lg:block">
             {time}
           </span>
