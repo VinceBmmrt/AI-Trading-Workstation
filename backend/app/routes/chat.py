@@ -60,6 +60,13 @@ def _portfolio_context(price_cache, session_baselines: dict[str, float] | None =
         watchlist = conn.execute(
             "SELECT ticker FROM watchlist WHERE user_id=?", (USER_ID,)
         ).fetchall()
+        fired_alerts = conn.execute(
+            "SELECT ticker, target_price, direction, triggered_at FROM price_alerts "
+            "WHERE user_id=? AND active=0 "
+            "AND triggered_at > strftime('%Y-%m-%dT%H:%M:%f+00:00', 'now', '-30 minutes') "
+            "ORDER BY triggered_at DESC LIMIT 5",
+            (USER_ID,),
+        ).fetchall()
 
     cash = profile["cash_balance"]
     holdings = 0.0
@@ -96,6 +103,15 @@ def _portfolio_context(price_cache, session_baselines: dict[str, float] | None =
         f"(start: ${STARTING_CAPITAL:.2f}, change: {delta_sign}${delta:.2f} / {delta_pct:+.1f}%)"
     )
 
+    if fired_alerts:
+        lines = [
+            f"  {r['ticker']} crossed {r['direction']} ${r['target_price']:.2f} at {r['triggered_at']}"
+            for r in fired_alerts
+        ]
+        alerts_block = "\nRecent price alerts fired (last 30 min):\n" + "\n".join(lines)
+    else:
+        alerts_block = ""
+
     movers_block = ""
     if session_baselines:
         movers = []
@@ -117,7 +133,7 @@ def _portfolio_context(price_cache, session_baselines: dict[str, float] | None =
     return (
         f"{header}\n"
         f"Positions:\n{chr(10).join(pos_lines) or '  (none)'}"
-        f"{movers_block}\n"
+        f"{alerts_block}{movers_block}\n"
         f"Watchlist: {wl}"
     )
 

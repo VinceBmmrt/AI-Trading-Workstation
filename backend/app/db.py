@@ -56,6 +56,16 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     actions TEXT,
     created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS price_alerts (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      TEXT NOT NULL DEFAULT 'default',
+    ticker       TEXT NOT NULL,
+    target_price REAL NOT NULL,
+    direction    TEXT NOT NULL CHECK(direction IN ('above','below')),
+    active       INTEGER NOT NULL DEFAULT 1,
+    triggered_at TEXT,
+    created_at   TEXT NOT NULL
+);
 """
 
 

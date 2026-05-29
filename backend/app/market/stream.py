@@ -17,10 +17,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/stream", tags=["streaming"])
 
 
-def create_stream_router(price_cache: PriceCache) -> APIRouter:
+def create_stream_router(
+    price_cache: PriceCache, alert_queue: asyncio.Queue | None = None
+) -> APIRouter:
     """Create the SSE streaming router with a reference to the price cache.
 
     This factory pattern lets us inject the PriceCache without globals.
+    Optionally accepts an alert_queue to drain and emit alert_fired SSE events.
     """
 
     @router.get("/prices")
@@ -36,7 +39,7 @@ def create_stream_router(price_cache: PriceCache) -> APIRouter:
         disconnection (EventSource built-in behavior).
         """
         return StreamingResponse(
-            _generate_events(price_cache, request),
+            _generate_events(price_cache, request, alert_queue=alert_queue),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",
@@ -53,6 +56,7 @@ async def _generate_events(
     request: Request,
     interval: float = 0.5,
     heartbeat_interval: float = 15.0,
+    alert_queue: asyncio.Queue | None = None,
 ) -> AsyncGenerator[str, None]:
     """Async generator that yields SSE-formatted price events.
 
@@ -91,6 +95,15 @@ async def _generate_events(
             elif now - last_emit >= heartbeat_interval:
                 last_emit = now
                 yield ": keepalive\n\n"
+
+            if alert_queue is not None:
+                while True:
+                    try:
+                        fired = alert_queue.get_nowait()
+                        import json as _json
+                        yield f"event: alert_fired\ndata: {_json.dumps(fired)}\n\n"
+                    except asyncio.QueueEmpty:
+                        break
 
             await asyncio.sleep(interval)
     except asyncio.CancelledError:

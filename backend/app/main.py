@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -20,13 +21,14 @@ from litellm import acompletion  # noqa: E402
 
 from .db import DEFAULT_TICKERS, get_db, init_db, take_snapshot  # noqa: E402
 from .market import PriceCache, create_market_data_source, create_stream_router  # noqa: E402
-from .routes import chat, health, portfolio, watchlist  # noqa: E402
+from .routes import alerts, chat, health, portfolio, watchlist  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
 
-# Shared price cache — created at import time so the stream router closure captures it
+# Shared price cache and alert queue — created at import time so stream router closure captures them
 _price_cache = PriceCache()
+_alert_queue: asyncio.Queue = asyncio.Queue()
 
 ALERT_THRESHOLD_PCT = 2.0
 ALERT_COOLDOWN_SEC = 600
@@ -132,6 +134,45 @@ async def _snapshot_loop(price_cache: PriceCache) -> None:
             logger.exception("Portfolio snapshot failed")
 
 
+async def _alert_check_loop(price_cache: PriceCache, alert_queue: asyncio.Queue) -> None:
+    """Check active price alerts every 500ms; fire triggered ones into the queue."""
+    while True:
+        await asyncio.sleep(0.5)
+        try:
+            with get_db() as conn:
+                rows = conn.execute(
+                    "SELECT id, ticker, target_price, direction FROM price_alerts "
+                    "WHERE user_id='default' AND active=1"
+                ).fetchall()
+            for row in rows:
+                current = price_cache.get_price(row["ticker"])
+                if current is None:
+                    continue
+                fired = (
+                    row["direction"] == "above" and current >= row["target_price"]
+                ) or (
+                    row["direction"] == "below" and current <= row["target_price"]
+                )
+                if not fired:
+                    continue
+                now = datetime.now(timezone.utc).isoformat()
+                with get_db() as conn2:
+                    conn2.execute(
+                        "UPDATE price_alerts SET active=0, triggered_at=? WHERE id=?",
+                        (now, row["id"]),
+                    )
+                await alert_queue.put({
+                    "id": row["id"],
+                    "ticker": row["ticker"],
+                    "target_price": row["target_price"],
+                    "direction": row["direction"],
+                    "current_price": current,
+                    "triggered_at": now,
+                })
+        except Exception:
+            logger.exception("Alert check error")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -156,10 +197,15 @@ async def lifespan(app: FastAPI):
     app.state.price_cache = _price_cache
     app.state.market_source = source
 
+    app.state.alert_queue = _alert_queue
+
     snapshot_task = asyncio.create_task(_snapshot_loop(_price_cache), name="snapshot-loop")
     monitor_task = asyncio.create_task(
         _proactive_monitor_loop(_price_cache, app.state.session_baselines),
         name="proactive-monitor",
+    )
+    alert_task = asyncio.create_task(
+        _alert_check_loop(_price_cache, _alert_queue), name="alert-check"
     )
 
     yield
@@ -173,6 +219,12 @@ async def lifespan(app: FastAPI):
     monitor_task.cancel()
     try:
         await monitor_task
+    except asyncio.CancelledError:
+        pass
+
+    alert_task.cancel()
+    try:
+        await alert_task
     except asyncio.CancelledError:
         pass
 
@@ -191,8 +243,9 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
-app.include_router(create_stream_router(_price_cache))
+app.include_router(create_stream_router(_price_cache, _alert_queue))
 app.include_router(watchlist.router)
+app.include_router(alerts.router)
 app.include_router(portfolio.router)
 app.include_router(chat.router)
 
