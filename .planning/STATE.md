@@ -9,13 +9,13 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 
 ## Current Phase
 
-**Phase 12: Settings & User Control** — 📋 Planned
+**Phase 12: Settings & User Control** — 📋 Planned (2 plans, 2 waves, ready to execute)
 
 Goal: Portfolio reset, configurable starting capital, layout preference persistence, dark/light theme toggle.
 
 ### Active Work
 
-(none — Phase 11 complete, Phase 12 not yet planned)
+(none — planning complete, awaiting execution)
 
 ## Previous Phase
 

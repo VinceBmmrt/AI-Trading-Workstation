@@ -20,7 +20,7 @@
 | 9 | Technical Indicators & Chart Upgrades | ✅ Complete | — | 4 |
 | 10 | AI Intelligence Upgrade | ✅ Complete | — | 4 |
 | 11 | Price Alerts & Notifications | ✅ Complete | — | 3 |
-| 12 | Settings & User Control | 📋 Planned | — | 3 |
+| 12 | Settings & User Control | 📋 Planned (2 plans) | — | 3 |
 
 ---
 
