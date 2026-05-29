@@ -46,31 +46,30 @@ export default function TradingPage() {
   const { portfolio, history, trades, analytics, refresh: refreshPortfolio } = usePortfolio();
 
   const [tickers, setTickers] = useState<string[]>(DEFAULT_TICKERS);
-  const [selectedTicker, setSelectedTicker] = useState(() => {
-    if (typeof window === "undefined") return "AAPL";
-    return localStorage.getItem("fa_selected_ticker") ?? "AAPL";
-  });
-  const [chatOpen, setChatOpen] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return localStorage.getItem("fa_chat_open") !== "false";
-  });
-  const [portfolioTab, setPortfolioTab] = useState<PortfolioTab>(() => {
-    if (typeof window === "undefined") return "positions";
-    return (localStorage.getItem("fa_portfolio_tab") as PortfolioTab) ?? "positions";
-  });
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>(() => {
-    if (typeof window === "undefined") return "chart";
-    return (localStorage.getItem("fa_mobile_panel") as MobilePanel) ?? "chart";
-  });
+  const [selectedTicker, setSelectedTicker] = useState("AAPL");
+  const [chatOpen, setChatOpen] = useState(true);
+  const [portfolioTab, setPortfolioTab] = useState<PortfolioTab>("positions");
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("chart");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [startingCapital, setStartingCapital] = useState(10000);
   const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  // Desktop: collapse chat when viewport is too narrow (only closes, never force-opens)
+  // Restore persisted layout preferences after mount (avoids SSR hydration mismatch)
   useEffect(() => {
+    const savedTicker = localStorage.getItem("fa_selected_ticker");
+    if (savedTicker) setSelectedTicker(savedTicker);
+    const savedTab = localStorage.getItem("fa_portfolio_tab") as PortfolioTab | null;
+    if (savedTab) setPortfolioTab(savedTab);
+    const savedPanel = localStorage.getItem("fa_mobile_panel") as MobilePanel | null;
+    if (savedPanel) setMobilePanel(savedPanel);
+
     const BREAKPOINT = 1100;
+    const savedChat = localStorage.getItem("fa_chat_open");
+    setChatOpen(savedChat !== "false" && window.innerWidth >= BREAKPOINT);
+
     function check() { if (window.innerWidth < BREAKPOINT) setChatOpen(false); }
-    check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
@@ -176,6 +175,8 @@ export default function TradingPage() {
       </div>
     </>
   );
+
+  if (!mounted) return null;
 
   return (
     <div className="flex flex-col h-full bg-bg">

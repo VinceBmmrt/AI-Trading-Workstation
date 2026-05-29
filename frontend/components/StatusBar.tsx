@@ -42,7 +42,7 @@ export default function StatusBar({ status, priceCount }: Props) {
       </div>
 
       <div className="flex items-center gap-4">
-        {lastUpdate && (
+        {!!lastUpdate && (
           <span className="text-[9px] font-mono text-text-dim tabular-nums">
             Last tick: {lastUpdate}
           </span>

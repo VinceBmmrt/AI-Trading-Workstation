@@ -172,7 +172,7 @@ export default function WatchlistPanel({
             {addLoading ? "…" : "+"}
           </button>
         </form>
-        {addError && (
+        {!!addError && (
           <p className="text-down text-[10px] font-mono mt-1.5 leading-snug">{addError}</p>
         )}
       </div>
