@@ -30,21 +30,73 @@ An AI-powered trading terminal that streams live market data, lets users trade a
 
 ## Technology Stack
 
-Technology stack not yet documented. Will populate after codebase mapping or first phase.
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Frontend | Next.js 16 + React 19, TypeScript, Tailwind CSS v4 | Static export (`output: "export"`), React Compiler enabled |
+| Charts | Lightweight Charts v5.2 | `addSeries(SeriesType, opts)` API; always use `"use no memo"` on chart components |
+| Backend | FastAPI (Python 3.12), uv package manager | `uv run`, never `python3` or `pip` |
+| Database | SQLite via `sqlite3` stdlib | WAL mode, single file at `db/AI Trading Workstation.db` |
+| Real-time | Server-Sent Events (`/api/stream/prices`) | Native `EventSource`, 500ms cadence |
+| AI | LiteLLM → OpenRouter (Cerebras) | See cerebras-inference skill for model ID and routing |
+| Containerization | Docker multi-stage (Node → Python) | Single port 8000; rebuild with `--no-cache` when frontend changes |
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
 
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+### Frontend
+- Components are `"use client"` React function components with TypeScript
+- Tailwind v4: theme tokens defined in `globals.css` via `@theme {}` (no `tailwind.config.js`)
+- CSS variables: `--color-bg`, `--color-surface`, `--color-up` (#3fb950), `--color-down` (#f85149), `--color-accent` (#ecad0a), `--color-blue` (#209dd7)
+- LWC chart components **must** include `"use no memo";` as the first line of the function body to prevent React Compiler from suppressing the chart `useEffect`
+- Chart `useEffect(fn, [])`: the `containerRef` div must always be in the DOM on first mount (never conditionally rendered) so the effect can mount LWC; empty states should be overlaid on top of the container, not replace it
+- Always set `cancelled = true` in the effect return: `return () => { cancelled = true; cleanup?.(); }`
+- Always rebuild Docker with `--no-cache` when frontend code changes (layer cache will serve stale JS otherwise)
+
+### Backend
+- All routes live in `backend/app/routes/`; market data in `backend/app/market/`
+- Database seeding: `init_db()` uses `INSERT OR IGNORE` for all `DEFAULT_TICKERS` on every startup — new tickers added to code auto-appear on next container start
+- Tickers must match `^[A-Z]{1,5}$` — no dots (e.g. use `AXP` not `BRK.B`)
+- Sector metadata lives in `backend/app/market/sectors.py` (`SECTOR_MAP` + `get_sector()`)
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
 
 ## Architecture
 
-Architecture not yet mapped. Follow existing patterns found in the codebase.
+### Frontend layout (desktop)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Header (portfolio value, P&L, cash, clock, settings)          │
+│  MarketBreadthBar (▲N GAIN ▼N LOSS, VOL level)                 │
+│  MarketSummaryBanner (session, paper trading badges)            │
+├──────────────┬──────────────────────────────┬───────────────────┤
+│ WatchlistPanel│      PriceChart              │  ChatPanel        │
+│ (2-col grid, │  (L/A/C toggle, MA/VOL/RSI)  │  (collapsible)    │
+│  33 tickers, │                              │                   │
+│  sector tabs,├──────────────────────────────┤                   │
+│  search)     │ PnLChart │ PositionsTable     │                   │
+│              │ (always  │ (or History /      │                   │
+│  TradeBar    │ visible) │  Analytics tabs)   │                   │
+│  (BUY/SELL)  ├──────────┤                   │                   │
+│              │ Heatmap  │                   │                   │
+└──────────────┴──────────┴───────────────────┴───────────────────┘
+│  StatusBar (connection, ticker count, paper badge)              │
+```
+
+### Key data flows
+- SSE stream → `useMarketData` hook → `prices` Map → WatchlistPanel cards + PriceChart live updates + MarketBreadthBar
+- Portfolio snapshots (every 30s + on trade) → `/api/portfolio/history` → PnLChart
+- `DEFAULT_TICKERS` (33) → SQLite watchlist on first boot → `/api/watchlist` → frontend
+
+### Watchlist (33 tickers, 6 sectors)
+- **Tech** (14): AAPL GOOGL MSFT AMZN TSLA NVDA META NFLX AMD INTC CRM ORCL SNOW PLTR
+- **Finance** (6): JPM V GS MS BAC AXP
+- **Health** (4): JNJ UNH PFE LLY
+- **Energy** (3): XOM CVX OXY
+- **Consumer** (3): WMT COST MCD
+- **ETF** (3): SPY QQQ IWM
 <!-- GSD:architecture-end -->
 
 <!-- GSD:skills-start source:skills/ -->
