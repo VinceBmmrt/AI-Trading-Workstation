@@ -36,7 +36,7 @@ _alert_semaphore = asyncio.Semaphore(1)
 
 
 async def _generate_proactive_alert(
-    ticker: str, session_pct: float, price: float, price_cache: PriceCache
+    ticker: str, session_pct: float, price: float, _price_cache: PriceCache
 ) -> None:
     """Generate and save a proactive market alert message."""
     async with _alert_semaphore:
@@ -80,7 +80,7 @@ async def _generate_proactive_alert(
                         reasoning_effort="low",
                         extra_body=chat.EXTRA_BODY,
                     )
-                    content = resp.choices[0].message.content.strip()
+                    content = (resp.choices[0].message.content or "").strip()  # type: ignore[union-attr]
                 except Exception:
                     logger.exception("Proactive LLM call failed for %s", ticker)
                     content = canned
