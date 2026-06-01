@@ -122,7 +122,7 @@ export default function PnLChart({ history }: Props) {
 
   if (history.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 h-full text-text-dim">
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-dim">
         <span className="text-2xl opacity-20">◈</span>
         <span className="text-[10px] font-mono uppercase tracking-widest">No history yet</span>
         <span className="text-[9px] font-mono text-text-dim/50">Snapshots every 30 s</span>
@@ -137,7 +137,7 @@ export default function PnLChart({ history }: Props) {
   const isUp     = delta >= 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="absolute inset-0 flex flex-col">
       {/* Stats bar */}
       <div className="flex items-center gap-2 px-3 py-1 border-b border-border-subtle shrink-0 text-[9px] font-mono overflow-x-auto">
         <span className="text-text-dim shrink-0">Start</span>
