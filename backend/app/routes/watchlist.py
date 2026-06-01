@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from ..db import get_db
+from ..market.sectors import get_sector
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
 
@@ -38,6 +39,23 @@ def get_watchlist(request: Request):
             "direction": update.direction if update else None,
         })
     return result
+
+
+@router.get("/sectors")
+def get_watchlist_sectors():
+    """Return sector grouping for all tickers currently in the watchlist."""
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT ticker FROM watchlist WHERE user_id=? ORDER BY added_at", (USER_ID,)
+        ).fetchall()
+
+    sectors: dict[str, list[str]] = {}
+    for row in rows:
+        ticker = row["ticker"]
+        sector = get_sector(ticker)
+        sectors.setdefault(sector, []).append(ticker)
+
+    return {"sectors": sectors}
 
 
 @router.post("")

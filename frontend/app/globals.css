@@ -77,3 +77,25 @@ html.light body { background: #f6f8fa; color: #1f2328; }
 /* Accent glow for selected / important elements */
 .accent-glow { box-shadow: 0 0 0 1px rgba(236, 173, 10, 0.25), 0 0 8px rgba(236, 173, 10, 0.08); }
 .blue-glow   { box-shadow: 0 0 0 1px rgba(32, 157, 215, 0.25), 0 0 8px rgba(32, 157, 215, 0.08); }
+
+/* Thin left accent bar variants for watchlist rows */
+.row-accent-up   { border-left: 2px solid var(--color-up); }
+.row-accent-down { border-left: 2px solid var(--color-down); }
+.row-accent-flat { border-left: 2px solid var(--color-border); }
+
+/* Sector filter pill */
+.sector-pill {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  background: var(--color-surface-2);
+  white-space: nowrap;
+}
+.sector-pill-active {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}

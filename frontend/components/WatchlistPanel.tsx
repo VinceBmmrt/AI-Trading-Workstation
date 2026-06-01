@@ -1,10 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Sparkline from "./Sparkline";
 import AlertPopover from "./AlertPopover";
 import type { PriceUpdate, Alert } from "@/lib/types";
 import { addToWatchlist, removeFromWatchlist } from "@/lib/api";
+
+// ── Sector map ──────────────────────────────────────────────────────────────
+type Sector = "TECH" | "FIN" | "HEALTH" | "ENERGY" | "CONS" | "ETF";
+
+const SECTOR_MAP: Record<string, Sector> = {
+  AAPL: "TECH", GOOGL: "TECH", MSFT: "TECH", AMZN: "TECH", TSLA: "TECH",
+  NVDA: "TECH", META: "TECH", NFLX: "TECH", AMD: "TECH", INTC: "TECH",
+  CRM: "TECH", ORCL: "TECH", SNOW: "TECH", PLTR: "TECH",
+  JPM: "FIN", V: "FIN", GS: "FIN", MS: "FIN", BAC: "FIN", AXP: "FIN",
+  JNJ: "HEALTH", UNH: "HEALTH", PFE: "HEALTH", LLY: "HEALTH",
+  XOM: "ENERGY", CVX: "ENERGY", OXY: "ENERGY",
+  WMT: "CONS", COST: "CONS", MCD: "CONS",
+  SPY: "ETF", QQQ: "ETF", IWM: "ETF",
+};
+
+const SECTOR_TABS = ["ALL", "TECH", "FIN", "HEALTH", "ENERGY", "CONS", "ETF"] as const;
+type SectorTab = (typeof SECTOR_TABS)[number];
+
+const SECTOR_ACCENT: Record<string, string> = {
+  TECH: "#209dd7", FIN: "#3fb950", HEALTH: "#79c0ff",
+  ENERGY: "#d29922", CONS: "#ecad0a", ETF: "#753991",
+};
 
 interface Props {
   tickers: string[];
@@ -23,10 +45,12 @@ export default function WatchlistPanel({
   selectedTicker, onSelectTicker, onWatchlistChange,
   alerts, onCreateAlert,
 }: Props) {
-  const [addInput, setAddInput] = useState("");
-  const [addError, setAddError] = useState("");
+  const [addInput, setAddInput]     = useState("");
+  const [addError, setAddError]     = useState("");
   const [addLoading, setAddLoading] = useState(false);
   const [alertPopoverTicker, setAlertPopoverTicker] = useState<string | null>(null);
+  const [search, setSearch]         = useState("");
+  const [sectorTab, setSectorTab]   = useState<SectorTab>("ALL");
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -52,95 +76,99 @@ export default function WatchlistPanel({
     } catch { /* ignore */ }
   }
 
+  const displayTickers = useMemo(() => {
+    return tickers.filter((t) => {
+      const matchSearch = search === "" || t.includes(search);
+      const matchSector = sectorTab === "ALL" || SECTOR_MAP[t] === sectorTab;
+      return matchSearch && matchSector;
+    });
+  }, [tickers, search, sectorTab]);
+
+  // Aggregate stats for the active tab
+  const stats = useMemo(() => {
+    const gainers = displayTickers.filter(t => (prices.get(t)?.change_percent ?? 0) > 0).length;
+    const losers  = displayTickers.filter(t => (prices.get(t)?.change_percent ?? 0) < 0).length;
+    return { gainers, losers };
+  }, [displayTickers, prices]);
+
   return (
     <div className="flex flex-col h-full">
-      {/* Column headers */}
-      <div className="grid grid-cols-[minmax(0,2.5fr)_minmax(0,2fr)_minmax(0,1.8fr)_40px] items-center px-3 py-1.5 border-b border-border-subtle">
-        <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Ticker</span>
-        <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Price</span>
-        <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Chg%</span>
-        <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest text-right">7D</span>
+
+      {/* Search bar */}
+      <div className="px-2 pt-2 pb-1.5 shrink-0">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value.toUpperCase())}
+          placeholder="SEARCH…"
+          className="w-full bg-surface-2 border border-border-subtle rounded px-2.5 py-1.5 text-[10px] font-mono text-text placeholder-text-dim uppercase focus:outline-none focus:border-blue/50 transition-colors"
+        />
       </div>
 
-      {/* Ticker rows */}
-      <div className="flex-1 overflow-y-auto">
-        {tickers.map((ticker) => {
-          const update = prices.get(ticker);
-          const hist = history.get(ticker) ?? [];
-          const flash = flashing.get(ticker);
-          const isSelected = ticker === selectedTicker;
-          const pct = update?.change_percent ?? 0;
-          const dir = update?.direction ?? "flat";
-          const isUp   = dir === "up";
-          const isDown = dir === "down";
-
-          const hasActiveAlert = alerts.some((a) => a.ticker === ticker && a.active);
-
+      {/* Sector filter tabs */}
+      <div
+        className="flex items-center gap-1 px-2 pb-1.5 overflow-x-auto shrink-0"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {SECTOR_TABS.map((tab) => {
+          const active = sectorTab === tab;
+          const accent = tab === "ALL" ? "var(--color-text-dim)" : SECTOR_ACCENT[tab];
           return (
-            <div
-              key={ticker}
-              onClick={() => onSelectTicker(ticker)}
+            <button
+              key={tab}
+              onClick={() => setSectorTab(tab)}
+              style={active ? { color: accent, borderColor: accent, background: `${accent}15` } : {}}
               className={[
-                "group",
-                "grid grid-cols-[minmax(0,2.5fr)_minmax(0,2fr)_minmax(0,1.8fr)_40px] items-center",
-                "px-3 py-2 cursor-pointer border-b border-border-subtle",
-                "transition-colors duration-75",
-                isSelected
-                  ? "bg-surface-2 border-l-2 border-l-accent"
-                  : "hover:bg-surface-2/60 border-l-2 border-l-transparent",
-                flash === "up"   ? "flash-up"   : "",
-                flash === "down" ? "flash-down" : "",
+                "shrink-0 px-2 py-0.5 rounded text-[9px] font-mono font-semibold uppercase tracking-wider cursor-pointer transition-all border",
+                active
+                  ? "border-current"
+                  : "text-text-dim border-border-subtle hover:text-text hover:border-border",
               ].join(" ")}
             >
-              {/* Ticker symbol */}
-              <span className={`font-mono text-[11px] font-bold tracking-wide truncate ${
-                isSelected ? "text-accent" : "text-text"
-              }`}>
-                {ticker}
-              </span>
-
-              {/* Price */}
-              <span className={`font-mono text-[11px] tabular-nums ${
-                isUp ? "text-up" : isDown ? "text-down" : "text-text"
-              }`}>
-                {update ? `$${update.price.toFixed(2)}` : <span className="text-text-dim">—</span>}
-              </span>
-
-              {/* Change % */}
-              <span className={`font-mono text-[10px] tabular-nums ${
-                isUp ? "text-up" : isDown ? "text-down" : "text-text-dim"
-              }`}>
-                {update
-                  ? `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`
-                  : <span className="text-text-dim">—</span>
-                }
-              </span>
-
-              {/* Sparkline + actions */}
-              <div className="relative flex items-center justify-end">
-                <Sparkline data={hist} width={38} height={20} />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-0.5 bg-surface-2/90 transition-opacity rounded-sm">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setAlertPopoverTicker(ticker); }}
-                    aria-label="Set price alert"
-                    className={`text-[11px] ${hasActiveAlert ? "text-yellow-400" : "text-text-dim/60"}`}
-                  >
-                    🔔
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleRemove(ticker); }}
-                    aria-label="Remove ticker"
-                    className="text-sm text-text-dim hover:text-down"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            </div>
+              {tab}
+            </button>
           );
         })}
       </div>
 
+      {/* Stats bar */}
+      <div className="flex items-center justify-between px-2 pb-1 shrink-0">
+        <span className="text-[9px] font-mono text-text-dim tabular-nums">
+          {displayTickers.length} symbols
+        </span>
+        <div className="flex items-center gap-2 text-[9px] font-mono tabular-nums">
+          <span className="text-up">▲{stats.gainers}</span>
+          <span className="text-down">▼{stats.losers}</span>
+        </div>
+      </div>
+
+      {/* 2-column compact grid */}
+      <div className="flex-1 overflow-y-auto px-1.5 pb-1">
+        {displayTickers.length === 0 ? (
+          <div className="py-8 text-center text-[10px] font-mono text-text-dim">
+            No symbols match
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-1">
+            {displayTickers.map((ticker) => (
+              <TickerCard
+                key={ticker}
+                ticker={ticker}
+                update={prices.get(ticker)}
+                hist={history.get(ticker) ?? []}
+                flash={flashing.get(ticker)}
+                isSelected={ticker === selectedTicker}
+                hasAlert={alerts.some(a => a.ticker === ticker && a.active)}
+                onSelect={() => onSelectTicker(ticker)}
+                onAlert={() => setAlertPopoverTicker(ticker)}
+                onRemove={() => handleRemove(ticker)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Alert popover */}
       {alertPopoverTicker && (
         <AlertPopover
           ticker={alertPopoverTicker}
@@ -154,7 +182,7 @@ export default function WatchlistPanel({
       )}
 
       {/* Add ticker */}
-      <div className="p-2.5 border-t border-border shrink-0">
+      <div className="px-2 pb-2 pt-1.5 border-t border-border shrink-0">
         <form onSubmit={handleAdd} className="flex gap-1.5">
           <input
             type="text"
@@ -162,7 +190,7 @@ export default function WatchlistPanel({
             onChange={(e) => { setAddInput(e.target.value.toUpperCase()); setAddError(""); }}
             placeholder="ADD SYMBOL…"
             maxLength={5}
-            className="flex-1 min-w-0 bg-bg border border-border rounded px-2 py-1.5 text-[10px] font-mono text-text placeholder-text-dim uppercase focus:outline-none focus:border-blue/60 transition-colors"
+            className="flex-1 min-w-0 bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-[10px] font-mono text-text placeholder-text-dim uppercase focus:outline-none focus:border-blue/60 transition-colors"
           />
           <button
             type="submit"
@@ -173,8 +201,112 @@ export default function WatchlistPanel({
           </button>
         </form>
         {!!addError && (
-          <p className="text-down text-[10px] font-mono mt-1.5 leading-snug">{addError}</p>
+          <p className="text-down text-[9px] font-mono mt-1 leading-snug">{addError}</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── Compact ticker card ────────────────────────────────────────────────────
+interface CardProps {
+  ticker: string;
+  update: PriceUpdate | undefined;
+  hist: number[];
+  flash: "up" | "down" | undefined;
+  isSelected: boolean;
+  hasAlert: boolean;
+  onSelect: () => void;
+  onAlert: () => void;
+  onRemove: () => void;
+}
+
+function TickerCard({ ticker, update, hist, flash, isSelected, hasAlert, onSelect, onAlert, onRemove }: CardProps) {
+  const pct     = update?.change_percent ?? 0;
+  const isUp    = update?.direction === "up";
+  const isDown  = update?.direction === "down";
+  const sector  = SECTOR_MAP[ticker];
+  const accent  = sector ? SECTOR_ACCENT[sector] : "var(--color-border)";
+
+  const borderColor = isSelected
+    ? "var(--color-accent)"
+    : isUp ? "var(--color-up)"
+    : isDown ? "var(--color-down)"
+    : "var(--color-border-subtle)";
+
+  return (
+    <div
+      onClick={onSelect}
+      className={[
+        "group relative flex flex-col rounded cursor-pointer select-none",
+        "border transition-all duration-75",
+        "overflow-hidden",
+        isSelected ? "bg-surface-2" : "bg-surface hover:bg-surface-2/80",
+        flash === "up"   ? "flash-up"   : "",
+        flash === "down" ? "flash-down" : "",
+      ].join(" ")}
+      style={{ borderColor: isSelected ? "var(--color-accent)" : "var(--color-border-subtle)" }}
+    >
+      {/* Top accent bar colored by direction */}
+      <div className="h-px w-full shrink-0" style={{ backgroundColor: borderColor }} />
+
+      <div className="px-2 pt-1 pb-1.5 flex flex-col gap-0.5 min-w-0">
+        {/* Row 1: ticker + sector dot */}
+        <div className="flex items-center justify-between min-w-0">
+          <span
+            className="font-mono text-[11px] font-bold tracking-wide truncate leading-none"
+            style={{ color: isSelected ? "var(--color-accent)" : "var(--color-text)" }}
+          >
+            {ticker}
+          </span>
+          {sector && (
+            <span
+              className="text-[7px] font-mono font-bold uppercase tracking-wider leading-none shrink-0 ml-1"
+              style={{ color: accent, opacity: 0.7 }}
+            >
+              {sector}
+            </span>
+          )}
+        </div>
+
+        {/* Row 2: price */}
+        <span
+          className="font-mono text-[11px] tabular-nums font-semibold leading-none"
+          style={{ color: isUp ? "var(--color-up)" : isDown ? "var(--color-down)" : "var(--color-text)" }}
+        >
+          {update ? `$${update.price.toFixed(2)}` : "—"}
+        </span>
+
+        {/* Row 3: chg% + sparkline */}
+        <div className="flex items-end justify-between gap-1">
+          <span
+            className="font-mono text-[9px] tabular-nums leading-none"
+            style={{ color: isUp ? "var(--color-up)" : isDown ? "var(--color-down)" : "var(--color-text-dim)" }}
+          >
+            {update ? `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%` : "—"}
+          </span>
+          <div className="opacity-70 group-hover:opacity-0 transition-opacity shrink-0">
+            <Sparkline data={hist} width={40} height={16} />
+          </div>
+        </div>
+      </div>
+
+      {/* Hover overlay: alert + remove */}
+      <div className="absolute bottom-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+        <button
+          onClick={(e) => { e.stopPropagation(); onAlert(); }}
+          aria-label="Set alert"
+          className={`text-[10px] leading-none px-0.5 ${hasAlert ? "text-yellow-400" : "text-text-dim/50 hover:text-text-dim"}`}
+        >
+          🔔
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          aria-label="Remove"
+          className="text-[12px] leading-none px-0.5 text-text-dim/50 hover:text-down"
+        >
+          ×
+        </button>
       </div>
     </div>
   );

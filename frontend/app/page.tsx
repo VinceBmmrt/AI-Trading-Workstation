@@ -13,6 +13,7 @@ import StatusBar from "@/components/StatusBar";
 import TradeHistory from "@/components/TradeHistory";
 import PortfolioAnalyticsPanel from "@/components/PortfolioAnalyticsPanel";
 import MarketSummaryBanner from "@/components/MarketSummaryBanner";
+import MarketBreadthBar from "@/components/MarketBreadthBar";
 import SettingsPanel from "@/components/SettingsPanel";
 import { useMarketData } from "@/hooks/useMarketData";
 import { usePortfolio } from "@/hooks/usePortfolio";
@@ -106,10 +107,6 @@ export default function TradingPage() {
   // Shared watchlist + tradebar content (used in both desktop aside and mobile panel)
   const watchlistContent = (
     <>
-      <div className="px-3 py-1.5 border-b border-border shrink-0 flex items-center justify-between">
-        <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Watchlist</span>
-        <span className="text-[9px] font-mono text-text-dim/40 tabular-nums">{tickers.length}</span>
-      </div>
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         <WatchlistPanel
           tickers={tickers}
@@ -170,7 +167,7 @@ export default function TradingPage() {
           {portfolioTab === "heatmap"    && <PortfolioHeatmap portfolio={portfolio} />}
           {portfolioTab === "pnl"        && <PnLChart history={history} />}
           {portfolioTab === "history"    && <TradeHistory trades={trades} />}
-          {portfolioTab === "analytics"  && <PortfolioAnalyticsPanel analytics={analytics} />}
+          {portfolioTab === "analytics"  && <PortfolioAnalyticsPanel analytics={analytics} portfolio={portfolio} />}
         </div>
       </div>
     </>
@@ -186,6 +183,7 @@ export default function TradingPage() {
         startingCapital={startingCapital}
         onOpenSettings={() => setSettingsOpen(true)}
       />
+      <MarketBreadthBar prices={market.prices} />
       <MarketSummaryBanner />
 
       {/* ── MOBILE layout (<md = 768px) ── */}
@@ -229,7 +227,7 @@ export default function TradingPage() {
       <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
 
         {/* LEFT — Watchlist + Trade Bar */}
-        <aside className="w-56 flex flex-col border-r border-border shrink-0 min-h-0">
+        <aside className="w-72 flex flex-col border-r border-border shrink-0 min-h-0">
           {watchlistContent}
         </aside>
 

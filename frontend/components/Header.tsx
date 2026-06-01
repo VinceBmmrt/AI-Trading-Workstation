@@ -57,6 +57,8 @@ export default function Header({ portfolio, status, startingCapital, onOpenSetti
   const netPnLPct   = netPnL !== null ? (netPnL / startingCapital) * 100 : null;
   const isProfit    = netPnL !== null && netPnL >= 0;
   const posCount    = portfolio?.positions.length ?? 0;
+  // Dramatic display when P&L is significant (>1% move)
+  const isSignificant = netPnLPct !== null && Math.abs(netPnLPct) > 1;
 
   return (
     <header className="relative flex items-center justify-between px-5 h-11 bg-surface border-b border-border shrink-0 z-20">
@@ -86,22 +88,26 @@ export default function Header({ portfolio, status, startingCapital, onOpenSetti
 
         <span className="text-border/40 text-xs">│</span>
 
-        {/* Net P&L */}
+        {/* Net P&L — dramatic when significant */}
         {netPnL !== null && (
-          <div className={`flex flex-col items-center px-3 py-1 mx-1 rounded border ${
+          <div className={`flex flex-col items-center px-3 py-1 mx-1 rounded border transition-all ${
             isProfit
-              ? "bg-up/[0.07] border-up/20"
-              : "bg-down/[0.07] border-down/20"
+              ? isSignificant
+                ? "bg-up/[0.12] border-up/40 shadow-[0_0_8px_rgba(63,185,80,0.25)]"
+                : "bg-up/[0.07] border-up/20"
+              : isSignificant
+                ? "bg-down/[0.12] border-down/40 shadow-[0_0_8px_rgba(248,81,73,0.25)]"
+                : "bg-down/[0.07] border-down/20"
           }`}>
             <span className="text-[8px] font-mono text-text-dim uppercase tracking-widest leading-none">
               {isProfit ? "Unrealized Gain" : "Unrealized Loss"}
             </span>
-            <div className={`flex items-baseline gap-1.5 mt-0.5 font-mono tabular-nums font-semibold text-[13px] leading-tight ${
-              isProfit ? "text-up" : "text-down"
-            }`}>
+            <div className={`flex items-baseline gap-1.5 mt-0.5 font-mono tabular-nums font-semibold leading-tight ${
+              isSignificant ? "text-[16px]" : "text-[13px]"
+            } ${isProfit ? "text-up" : "text-down"}`}>
               <span>{isProfit ? "+" : "−"}${fmt(Math.abs(netPnL))}</span>
               {netPnLPct !== null && (
-                <span className="text-[10px] opacity-75 font-normal">
+                <span className={`${isSignificant ? "text-[11px]" : "text-[10px]"} opacity-75 font-normal`}>
                   ({isProfit ? "+" : ""}{netPnLPct.toFixed(2)}%)
                 </span>
               )}
