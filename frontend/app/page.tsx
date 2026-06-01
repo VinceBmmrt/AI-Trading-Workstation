@@ -251,7 +251,7 @@ export default function TradingPage() {
               <div className="px-3 py-1 border-b border-border-subtle shrink-0 bg-surface flex items-center justify-between">
                 <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Portfolio P&L</span>
               </div>
-              <div className="flex-1 min-h-0 border-b border-border overflow-hidden flex flex-col">
+              <div className="h-[96px] border-b border-border overflow-hidden shrink-0">
                 <PnLChart history={history} />
               </div>
               <div className="px-3 py-1 border-b border-border-subtle shrink-0 bg-surface flex items-center justify-between">
@@ -262,7 +262,7 @@ export default function TradingPage() {
                   </span>
                 )}
               </div>
-              <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+              <div className="flex-1 min-h-0 overflow-hidden relative">
                 <PortfolioHeatmap portfolio={portfolio} />
               </div>
             </div>
