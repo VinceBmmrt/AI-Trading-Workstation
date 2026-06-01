@@ -13,6 +13,7 @@ import StatusBar from "@/components/StatusBar";
 import TradeHistory from "@/components/TradeHistory";
 import PortfolioAnalyticsPanel from "@/components/PortfolioAnalyticsPanel";
 import MarketSummaryBanner from "@/components/MarketSummaryBanner";
+import MarketBreadthBar from "@/components/MarketBreadthBar";
 import SettingsPanel from "@/components/SettingsPanel";
 import { useMarketData } from "@/hooks/useMarketData";
 import { usePortfolio } from "@/hooks/usePortfolio";
@@ -170,7 +171,7 @@ export default function TradingPage() {
           {portfolioTab === "heatmap"    && <PortfolioHeatmap portfolio={portfolio} />}
           {portfolioTab === "pnl"        && <PnLChart history={history} />}
           {portfolioTab === "history"    && <TradeHistory trades={trades} />}
-          {portfolioTab === "analytics"  && <PortfolioAnalyticsPanel analytics={analytics} />}
+          {portfolioTab === "analytics"  && <PortfolioAnalyticsPanel analytics={analytics} portfolio={portfolio} />}
         </div>
       </div>
     </>
@@ -186,6 +187,7 @@ export default function TradingPage() {
         startingCapital={startingCapital}
         onOpenSettings={() => setSettingsOpen(true)}
       />
+      <MarketBreadthBar prices={market.prices} />
       <MarketSummaryBanner />
 
       {/* ── MOBILE layout (<md = 768px) ── */}
@@ -229,7 +231,7 @@ export default function TradingPage() {
       <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
 
         {/* LEFT — Watchlist + Trade Bar */}
-        <aside className="w-56 flex flex-col border-r border-border shrink-0 min-h-0">
+        <aside className="w-64 flex flex-col border-r border-border shrink-0 min-h-0">
           {watchlistContent}
         </aside>
 
