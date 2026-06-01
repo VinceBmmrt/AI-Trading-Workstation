@@ -30,6 +30,7 @@ const SECTOR_MAP: Record<string, string> = {
 };
 
 const CHART_THEME = {
+  autoSize: true,
   layout: {
     background: { color: "#0d1117" },
     textColor: "#7d8590",
@@ -257,18 +258,7 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
         applyRange(range);
       }
 
-      const ro = new ResizeObserver(() => {
-        if (containerRef.current) {
-          chart.applyOptions({
-            width: containerRef.current.clientWidth,
-            height: containerRef.current.clientHeight,
-          });
-        }
-      });
-      ro.observe(containerRef.current);
-
       cleanup = () => {
-        ro.disconnect();
         chart.remove();
         chartRef.current = null;
         seriesRef.current = null;
@@ -333,18 +323,7 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
         .filter(Boolean);
       if (rsiData.length > 0) rsiSeries.setData(rsiData);
 
-      const ro = new ResizeObserver(() => {
-        if (rsiContainerRef.current) {
-          rsiChart.applyOptions({
-            width: rsiContainerRef.current.clientWidth,
-            height: rsiContainerRef.current.clientHeight,
-          });
-        }
-      });
-      ro.observe(rsiContainerRef.current);
-
       cleanup = () => {
-        ro.disconnect();
         rsiChart.remove();
         rsiChartRef.current = null;
         rsiSeriesRef.current = null;

@@ -22,7 +22,7 @@ SECTOR_MAP: dict[str, str] = {
     "GS": "Finance",
     "MS": "Finance",
     "BAC": "Finance",
-    "BRK.B": "Finance",
+    "AXP": "Finance",
     # Healthcare
     "JNJ": "Healthcare",
     "UNH": "Healthcare",

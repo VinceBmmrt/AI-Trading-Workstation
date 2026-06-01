@@ -13,7 +13,7 @@ const SECTOR_MAP: Record<string, Sector> = {
   AAPL: "TECH", GOOGL: "TECH", MSFT: "TECH", AMZN: "TECH", TSLA: "TECH",
   NVDA: "TECH", META: "TECH", NFLX: "TECH", AMD: "TECH", INTC: "TECH",
   CRM: "TECH", ORCL: "TECH", SNOW: "TECH", PLTR: "TECH",
-  JPM: "FIN", V: "FIN", GS: "FIN", MS: "FIN", BAC: "FIN", "BRK.B": "FIN",
+  JPM: "FIN", V: "FIN", GS: "FIN", MS: "FIN", BAC: "FIN", AXP: "FIN",
   JNJ: "HEALTH", UNH: "HEALTH", PFE: "HEALTH", LLY: "HEALTH",
   XOM: "ENERGY", CVX: "ENERGY", OXY: "ENERGY",
   WMT: "CONS", COST: "CONS", MCD: "CONS",

@@ -25,7 +25,7 @@ SEED_PRICES: dict[str, float] = {
     "GS": 545.00,
     "MS": 115.00,
     "BAC": 43.00,
-    "BRK.B": 455.00,
+    "AXP": 290.00,
     # Healthcare
     "JNJ": 155.00,
     "UNH": 530.00,
@@ -72,7 +72,7 @@ TICKER_PARAMS: dict[str, dict[str, float]] = {
     "GS": {"sigma": 0.22, "mu": 0.04},
     "MS": {"sigma": 0.22, "mu": 0.04},
     "BAC": {"sigma": 0.20, "mu": 0.04},
-    "BRK.B": {"sigma": 0.18, "mu": 0.04},
+    "AXP": {"sigma": 0.20, "mu": 0.04},
     # Healthcare
     "JNJ": {"sigma": 0.18, "mu": 0.03},
     "UNH": {"sigma": 0.22, "mu": 0.05},
@@ -99,7 +99,7 @@ DEFAULT_PARAMS: dict[str, float] = {"sigma": 0.25, "mu": 0.05}
 # Tickers in the same group have higher intra-group correlation
 CORRELATION_GROUPS: dict[str, set[str]] = {
     "tech": {"AAPL", "GOOGL", "MSFT", "AMZN", "META", "NVDA", "NFLX", "AMD", "INTC", "CRM", "ORCL", "SNOW", "PLTR"},
-    "finance": {"JPM", "V", "GS", "MS", "BAC", "BRK.B"},
+    "finance": {"JPM", "V", "GS", "MS", "BAC", "AXP"},
     "healthcare": {"JNJ", "UNH", "PFE", "LLY"},
     "energy": {"XOM", "CVX", "OXY"},
     "consumer": {"WMT", "COST", "MCD"},

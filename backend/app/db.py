@@ -14,7 +14,7 @@ DEFAULT_TICKERS = [
     "AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "NFLX",
     "AMD", "INTC", "CRM", "ORCL", "SNOW", "PLTR",
     # Finance
-    "JPM", "V", "GS", "MS", "BAC", "BRK.B",
+    "JPM", "V", "GS", "MS", "BAC", "AXP",
     # Healthcare
     "JNJ", "UNH", "PFE", "LLY",
     # Energy
@@ -124,14 +124,11 @@ def init_db() -> None:
         "INSERT OR IGNORE INTO users_profile (id, cash_balance, created_at) VALUES (?, ?, ?)",
         ("default", 10000.0, now),
     )
-    count = conn.execute(
-        "SELECT COUNT(*) FROM watchlist WHERE user_id = 'default'"
-    ).fetchone()[0]
-    if count == 0:
-        conn.executemany(
-            "INSERT OR IGNORE INTO watchlist (user_id, ticker, added_at) VALUES ('default', ?, ?)",
-            [(t, now) for t in DEFAULT_TICKERS],
-        )
+    # Always upsert default tickers so new tickers added in code updates appear on restart
+    conn.executemany(
+        "INSERT OR IGNORE INTO watchlist (user_id, ticker, added_at) VALUES ('default', ?, ?)",
+        [(t, now) for t in DEFAULT_TICKERS],
+    )
     conn.execute(
         "INSERT OR IGNORE INTO app_settings (id, starting_capital) VALUES ('default', 10000.0)"
     )
