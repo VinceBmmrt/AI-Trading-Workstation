@@ -54,12 +54,17 @@ export default function PnLChart({ history }: Props) {
   useEffect(() => {
     if (!containerRef.current) return;
     let cancelled = false;
+    let cleanup: (() => void) | undefined;
 
     import("lightweight-charts").then(({ createChart, AreaSeries }) => {
       if (cancelled || !containerRef.current) return;
 
-      const chart = createChart(containerRef.current, {
-        autoSize: true,
+      const container = containerRef.current;
+      const { width, height } = container.getBoundingClientRect();
+
+      const chart = createChart(container, {
+        width: width || 288,
+        height: height || 80,
         layout: {
           background: { color: "#0d1117" },
           textColor: "#7d8590",
@@ -102,14 +107,30 @@ export default function PnLChart({ history }: Props) {
       if (historyRef.current.length > 0) {
         applyHistoryToSeries(series, chart, historyRef.current);
       }
+
+      // Resize chart when container changes — also fires on next frame
+      // to catch flex-derived dimensions that weren't ready at creation time
+      function resize() {
+        if (cancelled || !containerRef.current) return;
+        const r = containerRef.current.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) {
+          chart.applyOptions({ width: r.width, height: r.height });
+        }
+      }
+      requestAnimationFrame(resize);
+      const ro = new ResizeObserver(resize);
+      ro.observe(container);
+
+      cleanup = () => {
+        cancelled = true;
+        ro.disconnect();
+        chart.remove();
+        chartRef.current  = null;
+        seriesRef.current = null;
+      };
     });
 
-    return () => {
-      cancelled = true;
-      chartRef.current?.remove();
-      chartRef.current  = null;
-      seriesRef.current = null;
-    };
+    return () => cleanup?.();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update series data whenever history changes — no chart recreate
