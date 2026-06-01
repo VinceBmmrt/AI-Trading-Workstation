@@ -122,10 +122,8 @@ export default function PnLChart({ history }: Props) {
 
   if (history.length === 0) {
     return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-dim">
-        <span className="text-2xl opacity-20">◈</span>
-        <span className="text-[10px] font-mono uppercase tracking-widest">No history yet</span>
-        <span className="text-[9px] font-mono text-text-dim/50">Snapshots every 30 s</span>
+      <div className="absolute inset-0 flex items-center justify-center text-[9px] font-mono text-text-dim/40 uppercase tracking-widest">
+        Awaiting snapshots…
       </div>
     );
   }
@@ -137,27 +135,22 @@ export default function PnLChart({ history }: Props) {
   const isUp     = delta >= 0;
 
   return (
-    <div className="absolute inset-0 flex flex-col">
-      {/* Stats bar */}
-      <div className="flex items-center gap-2 px-3 py-1 border-b border-border-subtle shrink-0 text-[9px] font-mono overflow-x-auto">
-        <span className="text-text-dim shrink-0">Start</span>
-        <span className="text-text tabular-nums shrink-0">
-          ${first.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-        </span>
-        <span className="text-border/40 shrink-0">│</span>
-        <span className="text-text-dim shrink-0">Now</span>
-        <span className="text-text tabular-nums font-semibold shrink-0">
+    <div className="absolute inset-0">
+      {/* Chart fills full space */}
+      <div ref={containerRef} className="absolute inset-0" />
+      {/* Stats overlay — sits on top of chart in bottom-left corner */}
+      <div className="absolute bottom-1 left-1 right-1 flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-mono pointer-events-none"
+           style={{ background: "rgba(13,17,23,0.75)" }}>
+        <span className="text-text-dim">$10K→</span>
+        <span className="text-text tabular-nums font-semibold">
           ${last.toLocaleString("en-US", { maximumFractionDigits: 0 })}
         </span>
-        <span className={`ml-auto shrink-0 tabular-nums font-bold px-1.5 py-0.5 rounded ${
-          isUp
-            ? "bg-up/10 text-up border border-up/25"
-            : "bg-down/10 text-down border border-down/25"
+        <span className={`ml-auto tabular-nums font-bold px-1.5 py-0.5 rounded ${
+          isUp ? "text-up" : "text-down"
         }`}>
-          {isUp ? "+" : ""}{delta.toFixed(0)} ({isUp ? "+" : ""}{deltaPct.toFixed(2)}%)
+          {isUp ? "+" : ""}{deltaPct.toFixed(2)}%
         </span>
       </div>
-      <div ref={containerRef} className="flex-1 min-h-0" />
     </div>
   );
 }
