@@ -231,7 +231,7 @@ export default function TradingPage() {
       <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
 
         {/* LEFT — Watchlist + Trade Bar */}
-        <aside className="w-64 flex flex-col border-r border-border shrink-0 min-h-0">
+        <aside className="w-72 flex flex-col border-r border-border shrink-0 min-h-0">
           {watchlistContent}
         </aside>
 
