@@ -96,13 +96,13 @@ export default function TradingPage() {
       .catch(() => {});
   }
 
-  // When user picks a ticker on mobile watchlist, jump to chart
-  function handleMobileTicker(ticker: string) {
-    setSelectedTicker(ticker);
-    setMobilePanel("chart");
-  }
-
   const priceCount = market.prices.size;
+
+  // On desktop, P&L and Heatmap are always visible — fall back to positions if one was saved
+  const desktopTab: "positions" | "history" | "analytics" =
+    portfolioTab === "positions" || portfolioTab === "history" || portfolioTab === "analytics"
+      ? portfolioTab
+      : "positions";
 
   // Shared watchlist + tradebar content (used in both desktop aside and mobile panel)
   const watchlistContent = (
@@ -231,9 +231,72 @@ export default function TradingPage() {
           {watchlistContent}
         </aside>
 
-        {/* CENTER — Chart + Portfolio */}
+        {/* CENTER — Chart + Portfolio (desktop split layout) */}
         <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-          {chartContent}
+          {/* Price chart — top 55% */}
+          <div className="flex-[3] min-h-0 border-b border-border overflow-hidden">
+            <PriceChart
+              ticker={selectedTicker}
+              prices={market.prices}
+              history={market.history}
+              volumeHistory={market.volumeHistory}
+            />
+          </div>
+
+          {/* Bottom — P&L + Heatmap (left) | table tabs (right) */}
+          <div className="flex-[2] min-h-0 flex overflow-hidden">
+
+            {/* Left: P&L chart stacked over Heatmap — always visible */}
+            <div className="w-72 flex flex-col border-r border-border shrink-0 min-h-0">
+              <div className="px-3 py-1 border-b border-border-subtle shrink-0 bg-surface flex items-center justify-between">
+                <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Portfolio P&L</span>
+              </div>
+              <div className="flex-1 min-h-0 border-b border-border overflow-hidden">
+                <PnLChart history={history} />
+              </div>
+              <div className="px-3 py-1 border-b border-border-subtle shrink-0 bg-surface flex items-center justify-between">
+                <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Holdings Map</span>
+                {portfolio && (
+                  <span className="text-[9px] font-mono text-text-dim/50 tabular-nums">
+                    {portfolio.positions.length} pos
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <PortfolioHeatmap portfolio={portfolio} />
+              </div>
+            </div>
+
+            {/* Right: table tabs */}
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+              <div className="flex items-center border-b border-border shrink-0 px-1 bg-surface overflow-x-auto">
+                {(["positions", "history", "analytics"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setPortfolioTab(tab)}
+                    className={`shrink-0 px-4 py-2 text-[10px] font-mono uppercase tracking-widest cursor-pointer border-b-2 transition-all ${
+                      desktopTab === tab
+                        ? "border-accent text-accent bg-accent/5"
+                        : "border-transparent text-text-dim hover:text-text hover:border-border"
+                    }`}
+                  >
+                    {TAB_LABELS[tab]}
+                  </button>
+                ))}
+                {portfolio && (
+                  <div className="ml-auto shrink-0 flex items-center gap-2 pr-3 text-[9px] font-mono text-text-dim uppercase tracking-widest">
+                    <span>${portfolio.holdings_value.toLocaleString("en-US", { maximumFractionDigits: 0 })} invested</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-h-0 overflow-auto">
+                {desktopTab === "positions"  && <PositionsTable portfolio={portfolio} />}
+                {desktopTab === "history"    && <TradeHistory trades={trades} />}
+                {desktopTab === "analytics"  && <PortfolioAnalyticsPanel analytics={analytics} portfolio={portfolio} />}
+              </div>
+            </div>
+
+          </div>
         </main>
 
         {/* RIGHT — Chat panel (collapsible) */}
