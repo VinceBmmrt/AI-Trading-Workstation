@@ -75,7 +75,7 @@ export default function TradeBar({ selectedTicker, prices, onTradeComplete }: Pr
             placeholder="QTY"
             value={quantity}
             onChange={(e) => { setQuantity(e.target.value); setStatus(null); }}
-            min="0.01"
+            min="1"
             step="1"
             className="flex-1 min-w-0 bg-bg border border-border rounded px-2 py-1.5 text-[11px] font-mono text-text placeholder-text-dim focus:outline-none focus:border-blue/60 transition-colors"
           />

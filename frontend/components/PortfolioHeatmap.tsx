@@ -54,20 +54,22 @@ export default function PortfolioHeatmap({ portfolio }: Props) {
             }}
             className="border rounded-md p-2 flex flex-col justify-between min-h-[64px] cursor-default transition-all hover:brightness-125"
           >
-            <div className="flex items-start justify-between gap-1">
-              <span className="font-mono text-xs font-bold text-text leading-none">{pos.ticker}</span>
-              <span className={`font-mono text-[9px] font-semibold tabular-nums leading-none px-1 py-0.5 rounded ${
+            <div className="flex items-start justify-between gap-0.5 min-w-0">
+              <span className="font-mono text-[11px] font-bold text-text leading-none truncate">{pos.ticker}</span>
+              <span className={`font-mono text-[9px] font-bold tabular-nums leading-none shrink-0 ${
                 isUp ? "text-up" : isDown ? "text-down" : "text-text-dim"
               }`}>
-                {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
+                {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%
               </span>
             </div>
-            <div>
-              <div className="font-mono text-[10px] text-text tabular-nums font-semibold">
-                ${pos.current_value.toFixed(0)}
+            <div className="flex items-end justify-between gap-0.5 min-w-0">
+              <div className="font-mono text-[10px] text-text tabular-nums font-semibold truncate">
+                ${pos.current_value >= 1000
+                  ? (pos.current_value / 1000).toFixed(1) + "k"
+                  : pos.current_value.toFixed(0)}
               </div>
-              <div className="font-mono text-[9px] text-text-dim tabular-nums mt-0.5">
-                {(weight * 100).toFixed(1)}% wt
+              <div className="font-mono text-[9px] text-text-dim tabular-nums shrink-0">
+                {(weight * 100).toFixed(0)}%
               </div>
             </div>
           </div>

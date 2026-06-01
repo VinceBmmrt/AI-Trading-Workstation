@@ -11,21 +11,18 @@ function computeBreadth(prices: Map<string, PriceUpdate>) {
   let gainers = 0;
   let losers = 0;
   let flat = 0;
-  let bigMoves = 0; // >1% change
 
   prices.forEach((update) => {
-    const pct = Math.abs(update.change_percent);
-    if (update.change_percent > 0.1) gainers++;
-    else if (update.change_percent < -0.1) losers++;
+    if (update.direction === "up") gainers++;
+    else if (update.direction === "down") losers++;
     else flat++;
-    if (pct > 1) bigMoves++;
   });
 
-  const total = prices.size;
+  const total = prices.size || 1;
+  const moving = gainers + losers;
   const volatility: "HIGH" | "MED" | "LOW" =
-    total === 0 ? "LOW"
-    : bigMoves / total > 0.4 ? "HIGH"
-    : bigMoves / total > 0.15 ? "MED"
+    moving / total > 0.7 ? "HIGH"
+    : moving / total > 0.4 ? "MED"
     : "LOW";
 
   return { gainers, losers, flat, volatility };
