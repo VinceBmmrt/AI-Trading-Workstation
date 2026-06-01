@@ -107,10 +107,6 @@ export default function TradingPage() {
   // Shared watchlist + tradebar content (used in both desktop aside and mobile panel)
   const watchlistContent = (
     <>
-      <div className="px-3 py-1.5 border-b border-border shrink-0 flex items-center justify-between">
-        <span className="text-[9px] font-mono text-text-dim uppercase tracking-widest">Watchlist</span>
-        <span className="text-[9px] font-mono text-text-dim/40 tabular-nums">{tickers.length}</span>
-      </div>
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         <WatchlistPanel
           tickers={tickers}

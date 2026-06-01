@@ -119,6 +119,7 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
   useEffect(() => {
     if (!containerRef.current) return;
     let cleanup: (() => void) | undefined;
+    let cancelled = false;
 
     import("lightweight-charts").then(({
       createChart,
@@ -127,7 +128,7 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
       CandlestickSeries,
       HistogramSeries,
     }) => {
-      if (!containerRef.current) return;
+      if (cancelled || !containerRef.current) return;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const chart: any = createChart(containerRef.current, CHART_THEME);
@@ -269,7 +270,7 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
       };
     });
 
-    return () => cleanup?.();
+    return () => { cancelled = true; cleanup?.(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker, chartType]);
 
@@ -277,9 +278,10 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
   useEffect(() => {
     if (!showRSI || !rsiContainerRef.current) return;
     let cleanup: (() => void) | undefined;
+    let cancelled = false;
 
     import("lightweight-charts").then(({ createChart, LineSeries }) => {
-      if (!rsiContainerRef.current) return;
+      if (cancelled || !rsiContainerRef.current) return;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rsiChart: any = createChart(rsiContainerRef.current, {
@@ -289,9 +291,6 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
           borderColor: "#21262d",
           textColor: "#7d8590",
           autoScale: false,
-          // @ts-expect-error -- lwc v5 accepts these on applyOptions below
-          minValue: 0,
-          maxValue: 100,
         },
         timeScale: { ...CHART_THEME.timeScale, visible: false },
         handleScale: { mouseWheel: false, pinch: false },
@@ -330,7 +329,7 @@ export default function PriceChart({ ticker, prices, history, volumeHistory }: P
       };
     });
 
-    return () => cleanup?.();
+    return () => { cancelled = true; cleanup?.(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker, showRSI]);
 

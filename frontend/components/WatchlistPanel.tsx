@@ -189,7 +189,7 @@ export default function WatchlistPanel({
             value={addInput}
             onChange={(e) => { setAddInput(e.target.value.toUpperCase()); setAddError(""); }}
             placeholder="ADD SYMBOL…"
-            maxLength={6}
+            maxLength={5}
             className="flex-1 min-w-0 bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-[10px] font-mono text-text placeholder-text-dim uppercase focus:outline-none focus:border-blue/60 transition-colors"
           />
           <button
