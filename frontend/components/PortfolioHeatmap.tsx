@@ -9,7 +9,7 @@ interface Props {
 export default function PortfolioHeatmap({ portfolio }: Props) {
   if (!portfolio || portfolio.positions.length === 0) {
     return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-dim">
+      <div className="flex-1 flex flex-col items-center justify-center gap-2 text-text-dim">
         <span className="text-2xl opacity-20">◈</span>
         <span className="text-[10px] font-mono uppercase tracking-widest">No positions to display</span>
       </div>
@@ -19,7 +19,7 @@ export default function PortfolioHeatmap({ portfolio }: Props) {
   const totalHoldings = portfolio.holdings_value || 1;
 
   return (
-    <div className="absolute inset-0 flex flex-wrap gap-1.5 p-2 content-start overflow-auto">
+    <div className="flex-1 flex flex-wrap gap-1.5 p-2 content-start overflow-auto">
       {portfolio.positions.map((pos) => {
         const weight = pos.current_value / totalHoldings;
         const pnlPct = pos.pnl_percent;

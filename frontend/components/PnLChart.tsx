@@ -122,7 +122,7 @@ export default function PnLChart({ history }: Props) {
 
   if (history.length === 0) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center text-[9px] font-mono text-text-dim/40 uppercase tracking-widest">
+      <div className="flex-1 flex items-center justify-center text-[9px] font-mono text-text-dim/40 uppercase tracking-widest">
         Awaiting snapshots…
       </div>
     );
@@ -135,22 +135,19 @@ export default function PnLChart({ history }: Props) {
   const isUp     = delta >= 0;
 
   return (
-    <div className="absolute inset-0">
-      {/* Chart fills full space */}
-      <div ref={containerRef} className="absolute inset-0" />
-      {/* Stats overlay — sits on top of chart in bottom-left corner */}
-      <div className="absolute bottom-1 left-1 right-1 flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-mono pointer-events-none"
-           style={{ background: "rgba(13,17,23,0.75)" }}>
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* Single-line stats */}
+      <div className="shrink-0 px-2 py-0.5 flex items-center gap-1.5 text-[8px] font-mono border-b border-border-subtle/50">
         <span className="text-text-dim">$10K→</span>
         <span className="text-text tabular-nums font-semibold">
           ${last.toLocaleString("en-US", { maximumFractionDigits: 0 })}
         </span>
-        <span className={`ml-auto tabular-nums font-bold px-1.5 py-0.5 rounded ${
-          isUp ? "text-up" : "text-down"
-        }`}>
+        <span className={`ml-auto tabular-nums font-bold ${isUp ? "text-up" : "text-down"}`}>
           {isUp ? "+" : ""}{deltaPct.toFixed(2)}%
         </span>
       </div>
+      {/* Chart — same pattern as PriceChart */}
+      <div ref={containerRef} className="flex-1 min-h-0" />
     </div>
   );
 }
