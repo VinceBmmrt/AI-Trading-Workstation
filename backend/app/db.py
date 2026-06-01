@@ -9,7 +9,21 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-DEFAULT_TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "NFLX"]
+DEFAULT_TICKERS = [
+    # Tech
+    "AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "NFLX",
+    "AMD", "INTC", "CRM", "ORCL", "SNOW", "PLTR",
+    # Finance
+    "JPM", "V", "GS", "MS", "BAC", "BRK.B",
+    # Healthcare
+    "JNJ", "UNH", "PFE", "LLY",
+    # Energy
+    "XOM", "CVX", "OXY",
+    # Consumer
+    "WMT", "COST", "MCD",
+    # ETFs
+    "SPY", "QQQ", "IWM",
+]
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users_profile (

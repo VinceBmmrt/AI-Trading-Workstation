@@ -15,8 +15,7 @@ from .seed_prices import (
     CORRELATION_GROUPS,
     CROSS_GROUP_CORR,
     DEFAULT_PARAMS,
-    INTRA_FINANCE_CORR,
-    INTRA_TECH_CORR,
+    GROUP_CORR,
     SEED_PRICES,
     TICKER_PARAMS,
     TSLA_CORR,
@@ -183,24 +182,17 @@ class GBMSimulator:
     def _pairwise_correlation(t1: str, t2: str) -> float:
         """Determine correlation between two tickers based on sector grouping.
 
-        Correlation structure:
-          - Same tech sector:   0.6
-          - Same finance sector: 0.5
-          - TSLA with anything: 0.3 (it does its own thing)
-          - Cross-sector:       0.3
-          - Unknown tickers:    0.3
-        """
-        tech = CORRELATION_GROUPS["tech"]
-        finance = CORRELATION_GROUPS["finance"]
+        Data-driven: reads CORRELATION_GROUPS and GROUP_CORR from seed_prices.
+        Adding a new sector group just works — no code changes needed here.
 
-        # TSLA is in tech set but behaves independently
+        Special case: TSLA behaves independently regardless of group.
+        """
         if t1 == "TSLA" or t2 == "TSLA":
             return TSLA_CORR
 
-        if t1 in tech and t2 in tech:
-            return INTRA_TECH_CORR
-        if t1 in finance and t2 in finance:
-            return INTRA_FINANCE_CORR
+        for group, members in CORRELATION_GROUPS.items():
+            if t1 in members and t2 in members:
+                return GROUP_CORR.get(group, CROSS_GROUP_CORR)
 
         return CROSS_GROUP_CORR
 
